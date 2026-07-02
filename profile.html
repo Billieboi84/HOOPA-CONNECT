@@ -70,10 +70,7 @@
 </nav>
 
 <script>
-const sellButton = document.querySelector('.nav-sell');
-if (sellButton && !window.location.pathname.endsWith('search.html')) {
-  sellButton.style.display = 'none';
-}
+// Sell button always visible
 
 async function checkProfile() {
   const area = document.getElementById('profile-area');

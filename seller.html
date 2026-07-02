@@ -1,74 +1,38 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-<title>Seller Profile</title>
-
+<title>Seller Profile — Hoopa-Connect</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
-
 <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
 <script src="js/supabase.js"></script>
-
 </head>
-
 <body>
 
 <header class="topbar">
-
-  <a href="index.html" class="back-btn">
-    ←
-  </a>
-
-  <div class="title">
-    Seller Profile
-  </div>
-
+  <a href="javascript:history.back()" class="back-btn">←</a>
+  <span class="topbar-title" id="seller-page-title">Seller Profile</span>
   <div></div>
-
 </header>
 
 <div class="container">
 
-  <div class="profile-card">
-
-    <img
-      class="avatar"
-      src="https://i.pravatar.cc/150"
-    >
-
-    <h2>
-      RiverStoneCrafts
-    </h2>
-
-    <p>
-      Local Hoopa seller sharing
-      handmade cultural artwork,
-      carvings and beadwork.
-    </p>
-
+  <div class="profile-card" id="seller-profile-card">
+    <div class="skeleton" style="width:80px;height:80px;border-radius:50%;margin:0 auto 14px;"></div>
+    <div class="skeleton" style="height:24px;width:60%;margin:0 auto 8px;"></div>
+    <div class="skeleton" style="height:16px;width:80%;margin:0 auto;"></div>
   </div>
 
   <div class="form-card">
-
-    <h2>
-      Seller Listings
-    </h2>
-
+    <h2>Seller Listings</h2>
   </div>
 
-  <div
-    class="grid"
-    id="seller-grid"
-  >
-
-    <p>Loading listings...</p>
-
+  <div class="grid" id="seller-grid">
+    <p class="grid-empty">Loading listings...</p>
   </div>
 
 </div>
@@ -97,85 +61,69 @@
 </nav>
 
 <script>
+// Sell button always visible
 
-async function loadSellerListings(){
+async function loadSeller() {
+  const params = new URLSearchParams(location.search);
+  const sellerId = params.get('id');
+  const profileCard = document.getElementById('seller-profile-card');
+  const grid = document.getElementById('seller-grid');
 
-  const grid =
-    document.getElementById(
-      "seller-grid"
-    );
-
-  const { data, error } =
-    await supabaseClient
-      .from("listings")
-      .select("*")
-      .limit(12);
-
-  if(error){
-
-    console.log(error);
-
-    grid.innerHTML = `
-      <p>Error loading listings</p>
-    `;
-
+  if (!sellerId) {
+    profileCard.innerHTML = `<p class="text-muted" style="text-align:center;padding:20px;">No seller specified.</p>`;
+    grid.innerHTML = '';
     return;
   }
 
-  if(data.length === 0){
+  // Load seller profile
+  const { data: profile } = await supabaseClient
+    .from('profiles')
+    .select('username, full_name, bio, avatar_url')
+    .eq('id', sellerId)
+    .single();
 
-    grid.innerHTML = `
-      <p>No listings yet</p>
-    `;
+  const name = profile?.full_name || profile?.username || 'Community Seller';
+  const handle = profile?.username ? `@${profile.username}` : '';
+  const bio = profile?.bio || 'No bio yet.';
+  const avatar = profile?.avatar_url || '';
+  const shortName = name.split(' ')[0] || 'Seller';
 
+  document.getElementById('seller-page-title').textContent = shortName;
+
+  profileCard.innerHTML = `
+    <img class="avatar" src="${avatar || 'data:image/svg+xml,<svg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 80 80\'><rect width=\'80\' height=\'80\' fill=\'%230f172a\'/><text y=\'52\' x=\'22\' font-size=\'40\'>👤</text></svg>'}" alt="${esc(name)}">
+    <h2>${esc(name)}</h2>
+    <p class="handle">${handle || 'Hoopa-Connect member'}</p>
+    <p class="bio">${esc(bio)}</p>
+  `;
+
+  // Load seller listings
+  const { data: listings, error } = await supabaseClient
+    .from('listings')
+    .select('*')
+    .eq('user_id', sellerId)
+    .order('id', { ascending: false });
+
+  if (error || !listings || listings.length === 0) {
+    grid.innerHTML = `<p class="grid-empty">This seller hasn't posted any listings yet.</p>`;
     return;
   }
 
-  grid.innerHTML = "";
-
-  data.forEach(item => {
-
-    grid.innerHTML += `
-
-      <a
-        href="listing.html?id=${item.id}"
-        class="card"
-      >
-
-        <img
-          src="${
-            item.image_url ||
-            'https://images.unsplash.com/photo-1511910849309-0dffb8785146'
-          }"
-        >
-
-        <div class="card-body">
-
-          <h3>
-            ${item.title}
-          </h3>
-
-          <p>
-            ${item.category}
-          </p>
-
-          <span>
-            $${item.price}
-          </span>
-
-        </div>
-
-      </a>
-
-    `;
-
+  grid.innerHTML = '';
+  listings.forEach(function(item) {
+    var a = document.createElement('a');
+    a.className = 'card';
+    a.href = 'listing.html?id=' + item.id;
+    a.innerHTML =
+      '<img src="' + esc(item.image_url) + '" loading="lazy" alt="' + esc(item.title) + '">' +
+      '<div class="card-body"><h3>' + esc(item.title) + '</h3>' +
+      '<span class="cat-tag">' + esc(item.category) + '</span>' +
+      '<div class="price">$' + esc(item.price) + '</div></div>';
+    grid.appendChild(a);
   });
-
 }
 
-loadSellerListings();
-
+loadSeller();
 </script>
-
 </body>
 </html>

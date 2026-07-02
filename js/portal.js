@@ -99,15 +99,6 @@
 
   let portalData = null;
 
-  function escapeHtml(value) {
-    return String(value)
-      .replace(/&/g, '&amp;')
-      .replace(/</g, '&lt;')
-      .replace(/>/g, '&gt;')
-      .replace(/"/g, '&quot;')
-      .replace(/'/g, '&#39;');
-  }
-
   function mergeDefaults(data) {
     const parsed = data || {};
     parsed.news = parsed.news || sampleData.news;
@@ -189,9 +180,9 @@
           <img src="images/chairman-davis.jpeg" alt="Chairman Joe Davis">
           <div>
             <div class="chairman-badge">Message from the Chairman</div>
-            <h4>${escapeHtml(message.title)}</h4>
-            <p>${escapeHtml(message.body)}</p>
-            <div class="meta-row"><span>${escapeHtml(message.date)}</span><a class="text-link" href="admin.html?portalAdmin=open">Update message</a></div>
+            <h4>${esc(message.title)}</h4>
+            <p>${esc(message.body)}</p>
+            <div class="meta-row"><span>${esc(message.date)}</span><a class="text-link" href="admin.html?portalAdmin=open">Update message</a></div>
           </div>
         </div>
       `;
@@ -201,24 +192,24 @@
   function buildNewsCard(article) {
     return `
       <article class="portal-card">
-        <img src="${escapeHtml(article.image || 'https://images.unsplash.com/photo-1495020689067-958852a7765e?auto=format&fit=crop&w=900&q=80')}" alt="${escapeHtml(article.title)}">
+        <img src="${esc(article.image || 'https://images.unsplash.com/photo-1495020689067-958852a7765e?auto=format&fit=crop&w=900&q=80')}" alt="${esc(article.title)}">
         <div class="portal-card-body">
           <div class="portal-card-top">
-            <span class="card-badge">${escapeHtml(article.category || 'Update')}</span>
-            <span class="card-distance">${escapeHtml(article.likes || 0)} likes</span>
+            <span class="card-badge">${esc(article.category || 'Update')}</span>
+            <span class="card-distance">${esc(article.likes || 0)} likes</span>
           </div>
-          <h4>${escapeHtml(article.title)}</h4>
-          <p>${escapeHtml(article.summary || article.body || '')}</p>
+          <h4>${esc(article.title)}</h4>
+          <p>${esc(article.summary || article.body || '')}</p>
           <div class="stats-row">
-            <button class="vote-btn" data-action="vote" data-target="news" data-id="${escapeHtml(article.id)}" data-value="like">👍 ${escapeHtml(article.likes || 0)}</button>
-            <button class="vote-btn" data-action="vote" data-target="news" data-id="${escapeHtml(article.id)}" data-value="dislike">👎 ${escapeHtml(article.dislikes || 0)}</button>
-            <span class="comment-count">💬 ${escapeHtml((article.comments || []).length)}</span>
-            <button class="text-link" type="button" data-open-article="${escapeHtml(article.id)}">Read more</button>
+            <button class="vote-btn" data-action="vote" data-target="news" data-id="${esc(article.id)}" data-value="like">👍 ${esc(article.likes || 0)}</button>
+            <button class="vote-btn" data-action="vote" data-target="news" data-id="${esc(article.id)}" data-value="dislike">👎 ${esc(article.dislikes || 0)}</button>
+            <span class="comment-count">💬 ${esc((article.comments || []).length)}</span>
+            <button class="text-link" type="button" data-open-article="${esc(article.id)}">Read more</button>
           </div>
           <div class="comment-thread">
-            ${(article.comments || []).slice(0, 2).map((comment) => `<div class="comment-item">${escapeHtml(comment)}</div>`).join('')}
+            ${(article.comments || []).slice(0, 2).map((comment) => `<div class="comment-item">${esc(comment)}</div>`).join('')}
           </div>
-          <form class="comment-form" data-action="comment" data-target="news" data-id="${escapeHtml(article.id)}">
+          <form class="comment-form" data-action="comment" data-target="news" data-id="${esc(article.id)}">
             <input type="text" name="comment" placeholder="Add a comment" required>
             <button type="submit">Post</button>
           </form>
@@ -235,15 +226,15 @@
       <article class="portal-card">
         <div class="portal-card-body">
           <div class="portal-card-top">
-            <span class="card-badge">${escapeHtml(entry.kind)}</span>
+            <span class="card-badge">${esc(entry.kind)}</span>
             <span class="card-distance">Local resource</span>
           </div>
-          <h4>${escapeHtml(entry.name)}</h4>
-          <p>${escapeHtml(entry.address)}</p>
-          <p>${escapeHtml(entry.phone)}</p>
+          <h4>${esc(entry.name)}</h4>
+          <p>${esc(entry.address)}</p>
+          <p>${esc(entry.phone)}</p>
           <div class="stats-row">
-            <a class="text-link" href="${escapeHtml(entry.website)}" target="_blank" rel="noreferrer">Website</a>
-            <a class="text-link" href="${escapeHtml(entry.maps)}" target="_blank" rel="noreferrer">Open in Maps</a>
+            <a class="text-link" href="${esc(entry.website)}" target="_blank" rel="noreferrer">Website</a>
+            <a class="text-link" href="${esc(entry.maps)}" target="_blank" rel="noreferrer">Open in Maps</a>
           </div>
         </div>
       </article>
@@ -258,15 +249,15 @@
       <article class="portal-card">
         <div class="portal-card-body">
           <div class="portal-card-top">
-            <span class="card-badge">${escapeHtml(job.type)}</span>
-            <span class="card-distance">${escapeHtml(job.location)}</span>
+            <span class="card-badge">${esc(job.type)}</span>
+            <span class="card-distance">${esc(job.location)}</span>
           </div>
-          <h4>${escapeHtml(job.title)}</h4>
-          <p><strong>${escapeHtml(job.employer)}</strong></p>
-          <p>${escapeHtml(job.summary)}</p>
+          <h4>${esc(job.title)}</h4>
+          <p><strong>${esc(job.employer)}</strong></p>
+          <p>${esc(job.summary)}</p>
           <div class="stats-row">
-            <a class="text-link" href="${escapeHtml(job.link)}" target="_blank" rel="noreferrer">Apply</a>
-            <a class="text-link" href="${escapeHtml(job.download)}" target="_blank" rel="noreferrer">Download form</a>
+            <a class="text-link" href="${esc(job.link)}" target="_blank" rel="noreferrer">Apply</a>
+            <a class="text-link" href="${esc(job.download)}" target="_blank" rel="noreferrer">Download form</a>
           </div>
         </div>
       </article>
@@ -383,9 +374,9 @@
     const content = document.getElementById('article-modal-content');
     if (!modal || !content || !article) return;
     content.innerHTML = `
-      <h3>${escapeHtml(article.title)}</h3>
-      <p><strong>${escapeHtml(article.category || 'Update')}</strong></p>
-      <p>${escapeHtml(article.body || article.summary || '')}</p>
+      <h3>${esc(article.title)}</h3>
+      <p><strong>${esc(article.category || 'Update')}</strong></p>
+      <p>${esc(article.body || article.summary || '')}</p>
     `;
     modal.classList.add('open');
     modal.setAttribute('aria-hidden', 'false');

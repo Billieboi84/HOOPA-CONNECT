@@ -49,10 +49,7 @@
 </nav>
 
 <script>
-const sellButton = document.querySelector('.nav-sell');
-if (sellButton && !window.location.pathname.endsWith('search.html')) {
-  sellButton.style.display = 'none';
-}
+// Sell button always visible
 
 const params = new URLSearchParams(location.search);
 const listingId = params.get('id');
