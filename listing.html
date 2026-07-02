@@ -49,6 +49,11 @@
 </nav>
 
 <script>
+const sellButton = document.querySelector('.nav-sell');
+if (sellButton && !window.location.pathname.endsWith('search.html')) {
+  sellButton.style.display = 'none';
+}
+
 const params = new URLSearchParams(location.search);
 const listingId = params.get('id');
 let currentListing = null;
@@ -131,6 +136,10 @@ async function loadListing() {
     <div class="info-card">
       <div class="listing-price">$${esc(data.price)}</div>
       <h1 class="listing-title" style="margin-top:8px;">${esc(data.title)}</h1>
+      <div class="listing-status-banner">
+        <span class="status-pill ${esc(data.status || 'available')}">${esc(((data.status || 'available').replace(/\b\w/g, c => c.toUpperCase())))}</span>
+        ${((data.status || 'available') === 'requestable') ? '<span>Pickup requests are welcome for this item.</span>' : ''}
+      </div>
       <div class="listing-meta">
         <span class="meta-pill">📂 ${esc(data.category || 'General')}</span>
         ${data.location ? `<span class="meta-pill">📍 ${esc(data.location)}</span>` : ''}
@@ -155,6 +164,7 @@ async function loadListing() {
       </a>
       <button class="btn btn-primary mt-16" onclick="contactSeller()">💬 Message Seller</button>
       <button class="btn btn-secondary" onclick="requestItem()">📦 Request Item</button>
+      ${(data.status || 'available') === 'requestable' ? '<p class="text-muted mt-8">This seller is open to request-based pickup or coordination.</p>' : ''}
     </div>
 
     <div class="info-card">

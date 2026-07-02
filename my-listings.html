@@ -51,6 +51,11 @@
 </nav>
 
 <script>
+const sellButton = document.querySelector('.nav-sell');
+if (sellButton && !window.location.pathname.endsWith('search.html')) {
+  sellButton.style.display = 'none';
+}
+
 async function loadMyListings() {
   const area = document.getElementById('my-list');
 
@@ -98,6 +103,9 @@ async function loadMyListings() {
         <div>
           <h3>${esc(item.title)}</h3>
           <span class="cat-tag">${esc(item.category)}</span>
+          <div class="listing-status-banner" style="margin: 6px 0 0;">
+            <span class="status-pill ${esc(item.status || 'available')}">${esc((item.status || 'available').replace(/\b\w/g, c => c.toUpperCase()))}</span>
+          </div>
         </div>
         <div class="price">$${esc(item.price)}</div>
         <div class="my-listing-actions">

@@ -13,10 +13,9 @@
 </head>
 <body>
 
-<header class="topbar">
-  <a href="index.html" class="logo">
-    <div class="logo-mark">HC</div>
-    <span class="logo-text">Hoopa-Connect</span>
+<header class="topbar topbar-marketplace">
+  <a href="index.html" class="logo logo-marketplace">
+    <img class="brand-banner brand-banner-large" src="images/hc-logo-banner-style.png" alt="Hoopa Connect banner">
   </a>
   <div></div>
 </header>
@@ -60,6 +59,11 @@
 </nav>
 
 <script>
+const sellButton = document.querySelector('.nav-sell');
+if (sellButton && window.location.pathname.endsWith('search.html')) {
+  sellButton.style.display = 'inline-flex';
+}
+
 let allListings = [];
 
 async function loadListings() {

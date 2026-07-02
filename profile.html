@@ -15,16 +15,34 @@
 
 <header class="topbar">
   <a href="index.html" class="logo">
-    <div class="logo-mark">HC</div>
-    <span class="logo-text">Hoopa-Connect</span>
+    <img class="brand-badge" src="images/hc-logo-badge.png" alt="Hoopa Connect badge">
+    <img class="brand-banner" src="images/hc-logo-banner-style.png" alt="Hoopa Connect banner">
   </a>
-  <a href="menu.html" class="menu-btn">☰</a>
+  <button class="menu-btn" onclick="openDrawer()" aria-label="Open menu">☰</button>
 </header>
 
 <div class="container">
   <div id="profile-area">
     <div class="skeleton" style="height:180px;border-radius:14px;margin-bottom:12px;"></div>
     <div class="skeleton" style="height:50px;border-radius:14px;"></div>
+  </div>
+</div>
+
+<div class="menu-drawer-backdrop" id="menu-drawer-backdrop" onclick="closeDrawer()">
+  <div class="menu-drawer" onclick="event.stopPropagation()">
+    <div class="menu-drawer-top">
+      <div class="menu-drawer-title">Portal Navigation</div>
+      <button class="menu-drawer-close" onclick="closeDrawer()">✕</button>
+    </div>
+    <div class="drawer-nav-list">
+      <a class="drawer-nav-link" href="index.html"><div><strong>Home</strong><br><span>Portal news and updates</span></div></a>
+      <a class="drawer-nav-link" href="search.html"><div><strong>Marketplace</strong><br><span>Browse listings and local offers</span></div></a>
+      <a class="drawer-nav-link" href="directory.html"><div><strong>Directory</strong><br><span>Tribal entities and local businesses</span></div></a>
+      <a class="drawer-nav-link" href="jobs.html"><div><strong>Jobs</strong><br><span>Opportunities and applications</span></div></a>
+      <a class="drawer-nav-link" href="search.html"><div><strong>Search</strong><br><span>Find listings fast</span></div></a>
+      <a class="drawer-nav-link" href="create-listing.html"><div><strong>Sell</strong><br><span>Post an item or service</span></div></a>
+      <a class="drawer-nav-link" href="settings.html"><div><strong>Settings</strong><br><span>Notifications and privacy</span></div></a>
+    </div>
   </div>
 </div>
 
@@ -52,6 +70,11 @@
 </nav>
 
 <script>
+const sellButton = document.querySelector('.nav-sell');
+if (sellButton && !window.location.pathname.endsWith('search.html')) {
+  sellButton.style.display = 'none';
+}
+
 async function checkProfile() {
   const area = document.getElementById('profile-area');
 
@@ -84,73 +107,76 @@ async function checkProfile() {
   const avatarSrc = profile?.avatar_url || '';
 
   area.innerHTML = `
-    <div class="profile-card">
-      ${avatarSrc
-        ? `<img class="avatar" src="${esc(avatarSrc)}" alt="avatar">`
-        : `<div class="avatar" style="display:flex;align-items:center;justify-content:center;font-size:36px;background:var(--surface);">👤</div>`
-      }
-      <h2>${esc(username)}</h2>
-      <p class="handle">${esc(fullname)}</p>
-      <p class="bio">${esc(bio) || 'No bio yet.'}</p>
+    <div class="profile-shell">
+      <div class="profile-card profile-hero">
+        ${avatarSrc
+          ? `<img class="avatar" src="${esc(avatarSrc)}" alt="avatar">`
+          : `<div class="avatar" style="display:flex;align-items:center;justify-content:center;font-size:36px;background:var(--surface);">👤</div>`
+        }
+        <div class="profile-hero-top">
+          <div>
+            <div class="profile-badge">Community Snapshot</div>
+            <h2>${esc(username)}</h2>
+            <p class="handle">${esc(fullname || '@' + username)}</p>
+          </div>
+          <a href="edit-profile.html" class="btn btn-secondary btn-sm" style="width:auto;">Edit</a>
+        </div>
+        <p class="bio">${esc(bio) || 'No bio yet. Share a short introduction so neighbors know who you are.'}</p>
+      </div>
+
+      <div class="profile-stats">
+        <div class="profile-stat"><strong>3</strong><span>Favorites</span></div>
+        <div class="profile-stat"><strong>2</strong><span>Listings</span></div>
+        <div class="profile-stat"><strong>1</strong><span>Messages</span></div>
+      </div>
+
+      <div class="section-block">
+        <div class="section-heading">
+          <h3>Quick Actions</h3>
+        </div>
+        <div class="profile-quick-grid">
+          <a href="my-listings.html" class="profile-quick-card">
+            <h4>My Listings</h4>
+            <p>View, edit, or mark items sold.</p>
+          </a>
+          <a href="favorites.html" class="profile-quick-card">
+            <h4>Favorites</h4>
+            <p>Keep track of saved items.</p>
+          </a>
+          <a href="inbox.html" class="profile-quick-card">
+            <h4>Messages</h4>
+            <p>Continue conversations.</p>
+          </a>
+          <a href="admin.html" class="profile-quick-card">
+            <h4>Admin Tools</h4>
+            <p>Manage portal content.</p>
+          </a>
+        </div>
+      </div>
+
+      <a href="settings.html" class="menu-item">
+        <div class="menu-icon">⚙️</div>
+        <div class="menu-item-text">
+          <h3>Settings</h3>
+          <p>Notifications, privacy &amp; more</p>
+        </div>
+        <span class="menu-arrow">›</span>
+      </a>
+
+      <div class="divider" style="margin-top:20px;"></div>
+      <button class="btn btn-secondary" onclick="logout()" style="margin-top:8px;">Sign Out</button>
     </div>
-
-    <a href="inbox.html" class="menu-item mt-16">
-      <div class="menu-icon">💬</div>
-      <div class="menu-item-text">
-        <h3>Messages</h3>
-        <p>Your conversations</p>
-      </div>
-      <span class="menu-arrow">›</span>
-    </a>
-
-    <a href="my-listings.html" class="menu-item">
-      <div class="menu-icon">🛍️</div>
-      <div class="menu-item-text">
-        <h3>My Listings</h3>
-        <p>View and manage your posts</p>
-      </div>
-      <span class="menu-arrow">›</span>
-    </a>
-
-    <a href="favorites.html" class="menu-item">
-      <div class="menu-icon">♥</div>
-      <div class="menu-item-text">
-        <h3>Favorites</h3>
-        <p>Items you've saved</p>
-      </div>
-      <span class="menu-arrow">›</span>
-    </a>
-
-    <a href="edit-profile.html" class="menu-item">
-      <div class="menu-icon">✏️</div>
-      <div class="menu-item-text">
-        <h3>Edit Profile</h3>
-        <p>Update your info</p>
-      </div>
-      <span class="menu-arrow">›</span>
-    </a>
-
-    <a href="settings.html" class="menu-item">
-      <div class="menu-icon">⚙️</div>
-      <div class="menu-item-text">
-        <h3>Settings</h3>
-        <p>Notifications, privacy &amp; more</p>
-      </div>
-      <span class="menu-arrow">›</span>
-    </a>
-
-    <a href="admin.html" class="menu-item">
-      <div class="menu-icon">🛠️</div>
-      <div class="menu-item-text">
-        <h3>Admin Tools</h3>
-        <p>Manage listings &amp; data</p>
-      </div>
-      <span class="menu-arrow">›</span>
-    </a>
-
-    <div class="divider" style="margin-top:20px;"></div>
-    <button class="btn btn-secondary" onclick="logout()" style="margin-top:8px;">Sign Out</button>
   `;
+}
+
+function openDrawer() {
+  const drawer = document.getElementById('menu-drawer-backdrop');
+  if (drawer) drawer.classList.add('open');
+}
+
+function closeDrawer() {
+  const drawer = document.getElementById('menu-drawer-backdrop');
+  if (drawer) drawer.classList.remove('open');
 }
 
 async function logout() {

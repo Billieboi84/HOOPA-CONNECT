@@ -46,6 +46,13 @@
       <option>Free Items</option>
     </select>
 
+    <label class="field-label">Listing status</label>
+    <select id="status">
+      <option value="available">Available</option>
+      <option value="requestable">Requestable</option>
+      <option value="sold">Sold</option>
+    </select>
+
     <label class="field-label">Photo</label>
     <div class="img-upload-area" id="upload-area">
       <input type="file" id="img-file" accept="image/*" onchange="previewImage(this)">
@@ -87,6 +94,11 @@
 </nav>
 
 <script>
+const sellButton = document.querySelector('.nav-sell');
+if (sellButton && !window.location.pathname.endsWith('search.html')) {
+  sellButton.style.display = 'none';
+}
+
 const params = new URLSearchParams(window.location.search);
 const listingId = params.get('id');
 let selectedFile = null;
@@ -161,6 +173,7 @@ async function loadListing() {
   document.getElementById('description').value = data.description || '';
   document.getElementById('price').value = data.price || '';
   document.getElementById('category').value = data.category || '';
+  document.getElementById('status').value = data.status || 'available';
   if (data.image_url) showExistingImage(data.image_url);
 }
 
@@ -185,7 +198,8 @@ async function updateListing() {
       description: document.getElementById('description').value,
       price: document.getElementById('price').value,
       image_url: imageUrl,
-      category: document.getElementById('category').value
+      category: document.getElementById('category').value,
+      status: document.getElementById('status').value || 'available'
     })
     .eq('id', listingId);
 

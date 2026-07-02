@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Hoopa-Connect Marketplace</title>
+<title>Hoopa-Connect Portal</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
@@ -12,43 +12,107 @@
 <script src="js/supabase.js"></script>
 </head>
 <body>
-
 <header class="topbar">
   <a href="index.html" class="logo">
-    <div class="logo-mark">HC</div>
-    <span class="logo-text">Hoopa-Connect</span>
+    <img class="brand-badge brand-badge-large" src="images/hc-logo-badge.png" alt="Hoopa Connect badge">
   </a>
-  <a href="menu.html" class="menu-btn">☰</a>
+  <div class="topbar-side">
+    <div class="weather-pill" aria-label="Weather for Hoopa">
+      <span>🌦️</span>
+      <span>Hoopa 68°</span>
+    </div>
+    <button class="menu-btn" onclick="openDrawer()" aria-label="Open menu">☰</button>
+  </div>
 </header>
-
+<div class="menu-drawer-backdrop" id="menu-drawer-backdrop" onclick="closeDrawer()">
+  <div class="menu-drawer" onclick="event.stopPropagation()">
+    <div class="menu-drawer-top">
+      <div class="menu-drawer-title">Portal Navigation</div>
+      <button class="menu-drawer-close" onclick="closeDrawer()">✕</button>
+    </div>
+    <div class="drawer-nav-list">
+      <a class="drawer-nav-link" href="index.html"><div><strong>Home</strong><br><span>Portal news and updates</span></div></a>
+      <a class="drawer-nav-link" href="search.html"><div><strong>Marketplace</strong><br><span>Browse listings and local offers</span></div></a>
+      <a class="drawer-nav-link" href="directory.html"><div><strong>Directory</strong><br><span>Local businesses and tribal entities</span></div></a>
+      <a class="drawer-nav-link" href="jobs.html"><div><strong>Jobs</strong><br><span>Opportunities and applications</span></div></a>
+      <a class="drawer-nav-link" href="search.html"><div><strong>Search</strong><br><span>Find listings quickly</span></div></a>
+      <a class="drawer-nav-link" href="profile.html"><div><strong>Profile</strong><br><span>Your account and activity</span></div></a>
+      <a class="drawer-nav-link" href="create-listing.html"><div><strong>Sell</strong><br><span>Post a new listing</span></div></a>
+    </div>
+  </div>
+</div>
 <div class="container">
-
   <div class="hero-band" id="hero-band">
-    <h2>Marketplace</h2>
-    <p>Browse local items, cultural goods, vehicles &amp; more.</p>
+    <div class="hero-top">
+      <div class="hero-copy">
+        <div class="hero-eyebrow">Hoopa Valley Community Portal</div>
+        <h2>Connecting Hoopa Valley</h2>
+        <p>A modern community portal for local news, trusted services, jobs, and important updates that keep Hoopa connected.</p>
+      </div>
+      <a class="hero-action" href="search.html">Open Marketplace</a>
+    </div>
+    <div class="search-pill">📣 Stay informed with local stories, opportunities, and community announcements</div>
   </div>
 
-  <div class="cat-strip" id="cat-strip">
-    <button class="cat-chip active" onclick="setFilter('All',this)">All</button>
-    <button class="cat-chip" onclick="setFilter('Cultural / Handmade',this)">🪶 Cultural</button>
-    <button class="cat-chip" onclick="setFilter('Electronics',this)">📱 Electronics</button>
-    <button class="cat-chip" onclick="setFilter('Cars & Trucks',this)">🚘 Cars</button>
-    <button class="cat-chip" onclick="setFilter('Home & Garden',this)">🏡 Home</button>
-    <button class="cat-chip" onclick="setFilter('Clothing',this)">👕 Clothing</button>
-    <button class="cat-chip" onclick="setFilter('Tools',this)">🛠 Tools</button>
-    <button class="cat-chip" onclick="setFilter('Furniture',this)">🪑 Furniture</button>
-    <button class="cat-chip" onclick="setFilter('Gaming',this)">🎮 Gaming</button>
-    <button class="cat-chip" onclick="setFilter('Services',this)">🧰 Services</button>
-    <button class="cat-chip" onclick="setFilter('Free Items',this)">🆓 Free</button>
+  <div class="section-block">
+    <div class="section-heading">
+      <h3>Local News & Events</h3>
+      <a href="directory.html">Explore</a>
+    </div>
+    <div id="news-feed" class="portal-stack"></div>
   </div>
 
-  <div class="grid" id="listings-grid">
-    <div class="skeleton" style="height:220px;border-radius:14px;"></div>
-    <div class="skeleton" style="height:220px;border-radius:14px;"></div>
-    <div class="skeleton" style="height:220px;border-radius:14px;"></div>
-    <div class="skeleton" style="height:220px;border-radius:14px;"></div>
+  <div class="section-block">
+    <div class="section-heading">
+      <h3>Words from the Chairman</h3>
+    </div>
+    <div id="chairman-preview"></div>
   </div>
 
+  <div class="section-block">
+    <div class="section-heading">
+      <h3>Marketplace Spotlight</h3>
+    </div>
+    <div class="marketplace-ad">
+      <div class="marketplace-ad-gallery">
+        <img src="images/marketplace-baskets.jpeg" alt="Native baskets marketplace promo">
+        <img src="images/marketplace-elkhorn.jpeg" alt="Elk horn marketplace promo">
+      </div>
+      <div class="marketplace-ad-copy">
+        <h4>Shop local, support Hoopa</h4>
+        <p>Find handmade goods, community offers, and local services in a space built for neighbors.</p>
+        <div class="action-row">
+          <a class="hero-action" href="search.html">Open Marketplace</a>
+          <a class="link-btn" href="directory.html">Directory</a>
+          <a class="link-btn" href="jobs.html">Jobs</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-block">
+    <div class="section-heading">
+      <h3>Community Links</h3>
+    </div>
+    <div class="shortcut-row">
+      <a class="shortcut-pill" href="directory.html">View Directory</a>
+      <a class="shortcut-pill" href="jobs.html">View Jobs</a>
+      <a class="shortcut-pill" href="profile.html">Your Profile</a>
+    </div>
+  </div>
+
+  <div class="footer-card">
+    <h4>Hoopa-Connect</h4>
+    <p>Hoopa-Connect is a community-focused app developed by DataSpark Industries, a company established since 2023 to build practical digital tools for local communities and organizations.</p>
+  </div>
+</div>
+
+<div id="article-modal" class="article-modal" aria-hidden="true">
+  <div class="article-modal-backdrop" data-close-modal="true"></div>
+  <div class="article-modal-panel" role="dialog" aria-modal="true">
+    <button class="article-modal-close" data-close-modal="true" aria-label="Close article">✕</button>
+    <div id="article-modal-content"></div>
+  </div>
 </div>
 
 <nav class="bottom-nav">
@@ -58,93 +122,27 @@
   </a>
   <a class="nav-item" href="search.html">
     <svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-    <span class="nav-label">Search</span>
+    <span class="nav-label">Marketplace</span>
   </a>
   <a class="nav-item nav-sell" href="create-listing.html">
     <svg viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
     <span class="nav-label">Sell</span>
   </a>
-  <a class="nav-item" href="categories.html">
-    <svg viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
-    <span class="nav-label">Browse</span>
+  <a class="nav-item hidden-admin-link" href="admin.html" style="display:none;">
+    <svg viewBox="0 0 24 24"><path d="M12 3l7 4v5c0 5-3.5 8-7 9-3.5-1-7-4-7-9V7l7-4z"/></svg>
+    <span class="nav-label">Admin</span>
   </a>
   <a class="nav-item" href="profile.html">
     <svg viewBox="0 0 24 24"><path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
     <span class="nav-label">Profile</span>
   </a>
 </nav>
-
 <script>
-let allListings = [];
-let activeFilter = 'All';
-
-async function loadListings() {
-  const { data, error } = await supabaseClient
-    .from('listings')
-    .select('*')
-    .order('id', { ascending: false });
-
-  if (error) {
-    document.getElementById('listings-grid').innerHTML =
-      '<p class="grid-empty">Error loading listings.</p>';
-    return;
+  const sellButton = document.querySelector('.nav-sell');
+  if (sellButton && !window.location.pathname.endsWith('search.html')) {
+    sellButton.style.display = 'none';
   }
-  allListings = data || [];
-
-  // FIX: Read category from URL and apply filter on load
-  const params = new URLSearchParams(location.search);
-  const cat = params.get('category');
-  if (cat) {
-    activeFilter = cat;
-    // Highlight the matching chip
-    document.querySelectorAll('.cat-chip').forEach(btn => {
-      btn.classList.toggle('active', btn.textContent.trim() === cat || btn.textContent.includes(cat));
-    });
-    const hero = document.getElementById('hero-band');
-    hero.querySelector('h2').textContent = cat;
-    hero.querySelector('p').textContent = `Browsing ${cat} listings.`;
-  }
-
-  renderListings(allListings);
-}
-
-function setFilter(cat, btn) {
-  activeFilter = cat;
-  document.querySelectorAll('.cat-chip').forEach(c => c.classList.remove('active'));
-  btn.classList.add('active');
-  renderListings(allListings);
-  // Update URL without reload
-  const url = cat === 'All' ? 'index.html' : `index.html?category=${encodeURIComponent(cat)}`;
-  history.replaceState(null, '', url);
-}
-
-function renderListings(items) {
-  const grid = document.getElementById('listings-grid');
-  const filtered = activeFilter === 'All'
-    ? items
-    : items.filter(i => i.category === activeFilter);
-
-  if (!filtered.length) {
-    grid.innerHTML = '<p class="grid-empty">No listings found.</p>';
-    return;
-  }
-  grid.innerHTML = '';
-  filtered.forEach(item => {
-    const a = document.createElement('a');
-    a.className = 'card';
-    a.href = `listing.html?id=${item.id}`;
-    a.innerHTML = `
-      <img src="${esc(item.image_url) || 'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=400'}" loading="lazy" alt="${esc(item.title)}">
-      <div class="card-body">
-        <h3>${esc(item.title)}</h3>
-        <span class="cat-tag">${esc(item.category)}</span>
-        <div class="price">$${esc(item.price)}</div>
-      </div>`;
-    grid.appendChild(a);
-  });
-}
-
-loadListings();
 </script>
+<script src="js/portal.js"></script>
 </body>
 </html>

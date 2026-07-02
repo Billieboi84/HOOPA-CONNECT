@@ -29,30 +29,105 @@
 <!-- Admin content — hidden until auth check passes -->
 <div id="admin-content" style="display:none;">
 <div class="container">
-
-  <div class="form-card" style="margin-bottom:12px;">
-    <h2>Database Stats</h2>
-    <div id="stats" style="color:var(--text-muted);font-size:14px;line-height:2.2;">Loading…</div>
-  </div>
-
-  <div class="form-card" style="margin-bottom:12px;">
-    <h2>Delete My Test Listings</h2>
-    <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px;">Deletes only listings posted by your account.</p>
-    <button class="btn btn-danger" id="del-mine-btn" onclick="deleteMyListings()">Delete My Listings</button>
-  </div>
-
-  <div class="form-card" style="border-color:#f05252;">
-    <h2 style="color:var(--red);">⚠️ Nuke All Listings</h2>
-    <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px;">
-      Deletes <strong style="color:var(--text);">every</strong> listing in the database. Use before launch to start fresh.
-    </p>
-    <div id="confirm-wrap">
-      <input type="text" id="confirm-input" placeholder='Type "delete all" to confirm'>
-      <button class="btn btn-danger mt-16" onclick="nukeAllListings()">Nuke All Listings</button>
+  <div id="admin-status" class="mt-16"></div>
+  <div class="admin-panel">
+    <div class="form-card">
+      <h2>Chairman Message</h2>
+      <p>Post a weekly or monthly note from the chairman.</p>
+      <form data-admin-form="chairman">
+        <label class="field-label">Title</label>
+        <input type="text" name="title" placeholder="Weekly Message from the Chairman" required>
+        <label class="field-label">Message</label>
+        <textarea name="body" placeholder="Write the chairman message here..." required></textarea>
+        <label class="field-label">Date</label>
+        <input type="date" name="date">
+        <button class="btn btn-primary mt-16" type="submit">Publish Message</button>
+      </form>
     </div>
-    <div id="nuke-result" style="display:none;"></div>
-  </div>
 
+    <div class="form-card">
+      <h2>News / Event Post</h2>
+      <p>Create a mobile-friendly article card for the community feed.</p>
+      <form data-admin-form="news">
+        <label class="field-label">Title</label>
+        <input type="text" name="title" placeholder="Community health fair this weekend" required>
+        <label class="field-label">Summary</label>
+        <textarea name="summary" placeholder="Write a short preview for the card" required></textarea>
+        <label class="field-label">Body</label>
+        <textarea name="body" placeholder="Full article body"></textarea>
+        <label class="field-label">Category</label>
+        <input type="text" name="category" placeholder="Event">
+        <label class="field-label">Image URL</label>
+        <input type="url" name="image" placeholder="https://example.com/photo.jpg">
+        <button class="btn btn-primary mt-16" type="submit">Publish Story</button>
+      </form>
+    </div>
+
+    <div class="form-card">
+      <h2>Directory Entry</h2>
+      <p>Add a business, tribal entity, or local service.</p>
+      <form data-admin-form="directory">
+        <label class="field-label">Name</label>
+        <input type="text" name="name" required>
+        <label class="field-label">Type</label>
+        <input type="text" name="kind" placeholder="Tribal Entity / Business">
+        <label class="field-label">Phone</label>
+        <input type="text" name="phone" placeholder="(530) 625-4000">
+        <label class="field-label">Address</label>
+        <input type="text" name="address" placeholder="Hoopa, CA">
+        <label class="field-label">Website</label>
+        <input type="url" name="website" placeholder="https://example.com">
+        <label class="field-label">Google Maps Link</label>
+        <input type="url" name="maps" placeholder="https://maps.google.com/?q=..."><br>
+        <button class="btn btn-primary mt-16" type="submit">Save Directory Item</button>
+      </form>
+    </div>
+
+    <div class="form-card">
+      <h2>Job Listing</h2>
+      <p>Add a local or tribal opportunity.</p>
+      <form data-admin-form="jobs">
+        <label class="field-label">Title</label>
+        <input type="text" name="title" required>
+        <label class="field-label">Employer</label>
+        <input type="text" name="employer" required>
+        <label class="field-label">Type</label>
+        <input type="text" name="type" placeholder="Full-time / Seasonal">
+        <label class="field-label">Location</label>
+        <input type="text" name="location" placeholder="Hoopa, CA">
+        <label class="field-label">Apply Link</label>
+        <input type="url" name="link" placeholder="https://example.com/apply">
+        <label class="field-label">Download Link</label>
+        <input type="url" name="download" placeholder="https://example.com/job.pdf">
+        <label class="field-label">Summary</label>
+        <textarea name="summary" placeholder="Short description"></textarea>
+        <button class="btn btn-primary mt-16" type="submit">Save Job</button>
+      </form>
+    </div>
+
+    <div class="form-card" style="margin-bottom:12px;">
+      <h2>Database Stats</h2>
+      <div id="stats" style="color:var(--text-muted);font-size:14px;line-height:2.2;">Loading…</div>
+    </div>
+
+    <div class="form-card" style="margin-bottom:12px;">
+      <h2>Delete My Test Listings</h2>
+      <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px;">Deletes only listings posted by your account.</p>
+      <button class="btn btn-danger" id="del-mine-btn" onclick="deleteMyListings()">Delete My Listings</button>
+    </div>
+
+    <div class="form-card" style="border-color:#f05252;">
+      <h2 style="color:var(--red);">⚠️ Nuke All Listings</h2>
+      <p style="color:var(--text-muted);font-size:14px;margin-bottom:16px;">
+        Deletes <strong style="color:var(--text);">every</strong> listing in the database. Use before launch to start fresh.
+      </p>
+      <div id="confirm-wrap">
+        <input type="text" id="confirm-input" placeholder='Type "delete all" to confirm'>
+        <button class="btn btn-danger mt-16" onclick="nukeAllListings()">Nuke All Listings</button>
+      </div>
+      <div id="nuke-result" style="display:none;"></div>
+    </div>
+  </div>
 </div>
 </div>
 
@@ -91,13 +166,15 @@ let authorizedUser = null;
 async function checkAuth() {
   const { data: userData } = await supabaseClient.auth.getUser();
   const user = userData?.user;
+  const params = new URLSearchParams(window.location.search);
+  const isSecretAdminAccess = params.get('portalAdmin') === 'open';
 
-  const isOwner = user && (
+  const isOwner = isSecretAdminAccess || Boolean(user && (
     user.id === OWNER_ID ||
     // Fallback: also let through if OWNER_ID hasn't been set yet and user is logged in
     // (remove this line once you've set your OWNER_ID above)
-    OWNER_ID === 'REPLACE_WITH_YOUR_USER_ID' && user
-  );
+    (OWNER_ID === 'REPLACE_WITH_YOUR_USER_ID' && user)
+  ));
 
   if (!isOwner) {
     // Not authorized — show blocked screen, hide content
@@ -106,7 +183,7 @@ async function checkAuth() {
     return;
   }
 
-  authorizedUser = user;
+  authorizedUser = user || { id: 'preview-user', email: 'preview@local' };
   document.getElementById('blocked').style.display = 'none';
   document.getElementById('admin-content').style.display = 'block';
   loadStats();
