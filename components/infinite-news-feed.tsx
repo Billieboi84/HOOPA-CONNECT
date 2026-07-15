@@ -1,78 +1,152 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ChevronDown, ChevronUp, MessageSquare, Send, ThumbsUp, ThumbsDown, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SkeletonStack } from '@/components/skeleton-stack';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
+import { subscribeToTableChanges } from '@/lib/supabase/realtime';
 import type { NewsItem } from '@/lib/mock-data';
 
 const PAGE_SIZE = 2;
-const STORAGE_KEY = 'hoopa-news-interactions-v1';
 
-type InteractionState = Record<
+type VoteValue = 'up' | 'down';
+
+type CommentRow = {
+  id: string;
+  article_id: string;
+  user_id: string;
+  display_name: string | null;
+  body: string;
+  created_at: string;
+};
+
+type VoteRow = {
+  article_id: string;
+  user_id: string;
+  value: VoteValue;
+};
+
+type FeedState = Record<
   string,
   {
-    vote: 'up' | 'down' | null;
+    vote: VoteValue | null;
     likes: number;
     dislikes: number;
-    comments: string[];
+    comments: CommentRow[];
   }
 >;
 
-function loadInteractions(items: NewsItem[]): InteractionState {
-  const seed: InteractionState = {};
-  items.forEach((item) => {
-    seed[item.id] = {
+type ActiveArticle = Omit<NewsItem, 'comments'> & {
+  currentVote: VoteValue | null;
+  likes: number;
+  dislikes: number;
+  comments: CommentRow[];
+};
+
+function buildInitialState(items: NewsItem[]): FeedState {
+  return items.reduce<FeedState>((acc, item) => {
+    acc[item.id] = {
       vote: null,
       likes: item.likes,
       dislikes: item.dislikes,
       comments: []
     };
-  });
+    return acc;
+  }, {});
+}
 
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return seed;
-    const parsed = JSON.parse(raw) as Partial<InteractionState>;
-    return Object.entries(seed).reduce<InteractionState>((acc, [id, value]) => {
-      const saved = parsed[id];
-      acc[id] = {
-        vote: saved?.vote ?? value.vote,
-        likes: typeof saved?.likes === 'number' ? saved.likes : value.likes,
-        dislikes: typeof saved?.dislikes === 'number' ? saved.dislikes : value.dislikes,
-        comments: Array.isArray(saved?.comments) ? saved.comments : value.comments
-      };
-      return acc;
-    }, {});
-  } catch {
-    return seed;
-  }
+function formatTimestamp(value: string) {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('en', {
+    month: 'short',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit'
+  }).format(date);
 }
 
 export function InfiniteNewsFeed({ items }: { items: NewsItem[] }) {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const [interactions, setInteractions] = useState<InteractionState>({});
+  const [feedState, setFeedState] = useState<FeedState>(() => buildInitialState(items));
+  const [loading, setLoading] = useState(true);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [draft, setDraft] = useState('');
+  const [sessionUserId, setSessionUserId] = useState<string | null>(null);
+  const [sessionName, setSessionName] = useState<string | null>(null);
+  const [error, setError] = useState('');
   const sentinelRef = useRef<HTMLDivElement | null>(null);
+  const itemsKey = useMemo(() => items.map((item) => item.id).join(','), [items]);
   const visibleItems = useMemo(() => items.slice(0, visibleCount), [items, visibleCount]);
   const hasMore = visibleCount < items.length;
-  const activeItem = visibleItems.find((item) => item.id === activeId) || items.find((item) => item.id === activeId) || null;
 
-  useEffect(() => {
-    setInteractions(loadInteractions(items));
+  const refreshFeed = useCallback(async () => {
+    const supabase = createSupabaseBrowserClient();
+    if (!supabase) {
+      setLoading(false);
+      return;
+    }
+
+    setLoading(true);
+    setError('');
+
+    const [{ data: userData }, { data: voteRows }, { data: commentRows }] = await Promise.all([
+      supabase.auth.getUser(),
+      supabase
+        .from('news_votes')
+        .select('article_id,user_id,value')
+        .in('article_id', items.map((item) => item.id)),
+      supabase
+        .from('news_comments')
+        .select('id,article_id,user_id,display_name,body,created_at')
+        .in('article_id', items.map((item) => item.id))
+        .order('created_at', { ascending: false })
+    ]);
+
+    const user = userData.user;
+    setSessionUserId(user?.id ?? null);
+    setSessionName(user?.user_metadata?.full_name ?? user?.email ?? null);
+
+    const nextState = buildInitialState(items);
+
+    items.forEach((item) => {
+      const votesForArticle = (voteRows ?? []).filter((row) => row.article_id === item.id);
+      const upVotes = votesForArticle.filter((row) => row.value === 'up').length;
+      const downVotes = votesForArticle.filter((row) => row.value === 'down').length;
+      const myVote = votesForArticle.find((row) => row.user_id === user?.id)?.value ?? null;
+
+      nextState[item.id] = {
+        vote: myVote,
+        likes: item.likes + upVotes,
+        dislikes: item.dislikes + downVotes,
+        comments: (commentRows ?? []).filter((row) => row.article_id === item.id)
+      };
+    });
+
+    setFeedState(nextState);
+    setLoading(false);
   }, [items]);
 
   useEffect(() => {
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(interactions));
-    } catch {
-      // Ignore storage failures.
-    }
-  }, [interactions]);
+    refreshFeed();
+  }, [refreshFeed, itemsKey]);
+
+  useEffect(() => {
+    const supabase = createSupabaseBrowserClient();
+    if (!supabase) return;
+
+    const votesChannel = subscribeToTableChanges(supabase, 'news_votes', () => refreshFeed());
+    const commentsChannel = subscribeToTableChanges(supabase, 'news_comments', () => refreshFeed());
+
+    return () => {
+      supabase.removeChannel(votesChannel);
+      supabase.removeChannel(commentsChannel);
+    };
+  }, [refreshFeed, itemsKey]);
 
   useEffect(() => {
     const sentinel = sentinelRef.current;
@@ -91,70 +165,100 @@ export function InfiniteNewsFeed({ items }: { items: NewsItem[] }) {
     return () => observer.disconnect();
   }, [hasMore, items.length, visibleCount]);
 
-  function updateVote(itemId: string, nextVote: 'up' | 'down') {
-    setInteractions((current) => {
-      const existing = current[itemId] || { vote: null, likes: 0, dislikes: 0, comments: [] };
-      let likes = existing.likes;
-      let dislikes = existing.dislikes;
-      let vote: 'up' | 'down' | null = existing.vote;
+  const activeArticle = useMemo<ActiveArticle | null>(() => {
+    if (!activeId) return null;
+    const item = items.find((article) => article.id === activeId);
+    if (!item) return null;
 
-      if (existing.vote === nextVote) {
-        if (nextVote === 'up') likes = Math.max(0, likes - 1);
-        if (nextVote === 'down') dislikes = Math.max(0, dislikes - 1);
-        vote = null;
-      } else {
-        if (existing.vote === 'up') likes = Math.max(0, likes - 1);
-        if (existing.vote === 'down') dislikes = Math.max(0, dislikes - 1);
-        if (nextVote === 'up') likes += 1;
-        if (nextVote === 'down') dislikes += 1;
-        vote = nextVote;
-      }
+    const state = feedState[item.id] ?? buildInitialState([item])[item.id];
+    return {
+      ...item,
+      currentVote: state.vote,
+      likes: state.likes,
+      dislikes: state.dislikes,
+      comments: state.comments
+    };
+  }, [activeId, feedState, items]);
 
-      return {
-        ...current,
-        [itemId]: {
-          ...existing,
-          vote,
-          likes,
-          dislikes
-        }
-      };
-    });
+  async function setVote(articleId: string, value: VoteValue) {
+    const supabase = createSupabaseBrowserClient();
+    if (!supabase) {
+      setError('Missing Supabase configuration.');
+      return;
+    }
+
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData.user;
+    if (!user) {
+      setError('Sign in to vote.');
+      return;
+    }
+
+    setError('');
+    const { error: voteError } = await supabase.from('news_votes').upsert(
+      {
+        article_id: articleId,
+        user_id: user.id,
+        value
+      },
+      { onConflict: 'article_id,user_id' }
+    );
+
+    if (voteError) {
+      setError(voteError.message);
+      return;
+    }
+
+    await refreshFeed();
   }
 
-  function openComments(itemId: string) {
-    setActiveId(itemId);
-    setDraft('');
-  }
+  async function addComment() {
+    if (!activeArticle) return;
 
-  function addComment() {
-    if (!activeId) return;
-    const value = draft.trim();
-    if (!value) return;
+    const body = draft.trim();
+    if (!body) return;
 
-    setInteractions((current) => {
-      const existing = current[activeId] || { vote: null, likes: 0, dislikes: 0, comments: [] };
-      return {
-        ...current,
-        [activeId]: {
-          ...existing,
-          comments: [value, ...existing.comments]
-        }
-      };
+    const supabase = createSupabaseBrowserClient();
+    if (!supabase) {
+      setError('Missing Supabase configuration.');
+      return;
+    }
+
+    const { data: userData } = await supabase.auth.getUser();
+    const user = userData.user;
+    if (!user) {
+      setError('Sign in to comment.');
+      return;
+    }
+
+    setError('');
+    const { error: commentError } = await supabase.from('news_comments').insert({
+      article_id: activeArticle.id,
+      user_id: user.id,
+      display_name: user.user_metadata?.full_name ?? user.email ?? 'Community member',
+      body
     });
+
+    if (commentError) {
+      setError(commentError.message);
+      return;
+    }
+
     setDraft('');
+    await refreshFeed();
   }
 
   return (
     <div className="space-y-4">
+      {error ? (
+        <div className="rounded-2xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-200">
+          {error}
+        </div>
+      ) : null}
+
       <div className="section-grid">
         {visibleItems.map((item, index) => {
-          const state = interactions[item.id] || {
-            vote: null,
-            likes: item.likes,
-            dislikes: item.dislikes,
-            comments: []
-          };
+          const state = feedState[item.id] || buildInitialState([item])[item.id];
 
           return (
             <motion.article
@@ -173,30 +277,28 @@ export function InfiniteNewsFeed({ items }: { items: NewsItem[] }) {
                   <Badge>{item.category}</Badge>
                   <span className="text-xs text-muted-foreground">{state.likes - state.dislikes} score</span>
                 </div>
-                <h3 className="text-lg font-semibold tracking-tight">{item.title}</h3>
+                <button
+                  type="button"
+                  className="block text-left"
+                  onClick={() => setActiveId(item.id)}
+                >
+                  <h3 className="text-lg font-semibold tracking-tight">{item.title}</h3>
+                </button>
                 <p className="text-sm leading-6 text-muted-foreground">{item.summary}</p>
-                <div className="flex flex-wrap items-center gap-2">
-                  <Button
-                    variant={state.vote === 'up' ? 'default' : 'secondary'}
-                    size="sm"
-                    onClick={() => updateVote(item.id, 'up')}
-                  >
-                    <ThumbsUp className="h-4 w-4" />
-                    {state.likes}
-                  </Button>
-                  <Button
-                    variant={state.vote === 'down' ? 'default' : 'secondary'}
-                    size="sm"
-                    onClick={() => updateVote(item.id, 'down')}
-                  >
-                    <ThumbsDown className="h-4 w-4" />
-                    {state.dislikes}
-                  </Button>
-                  <Button variant="ghost" size="sm" onClick={() => openComments(item.id)}>
-                    <MessageSquare className="h-4 w-4" />
-                    {state.comments.length} comments
-                  </Button>
-                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-2 px-5 pb-5">
+                <Button variant={state.vote === 'up' ? 'default' : 'secondary'} size="sm" onClick={() => setVote(item.id, 'up')}>
+                  <ThumbsUp className="h-4 w-4" />
+                  {state.likes}
+                </Button>
+                <Button variant={state.vote === 'down' ? 'default' : 'secondary'} size="sm" onClick={() => setVote(item.id, 'down')}>
+                  <ThumbsDown className="h-4 w-4" />
+                  {state.dislikes}
+                </Button>
+                <Button variant="ghost" size="sm" onClick={() => setActiveId(item.id)}>
+                  <MessageSquare className="h-4 w-4" />
+                  {state.comments.length} comments
+                </Button>
               </div>
             </motion.article>
           );
@@ -205,80 +307,101 @@ export function InfiniteNewsFeed({ items }: { items: NewsItem[] }) {
 
       {hasMore ? (
         <div ref={sentinelRef} className="pt-2">
-          <SkeletonStack />
+          {loading ? <SkeletonStack /> : null}
         </div>
       ) : null}
 
-      {activeItem ? (
+      {activeArticle ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
           <button
             aria-label="Close article"
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
             onClick={() => setActiveId(null)}
           />
-          <div className="relative z-10 w-full max-w-2xl overflow-hidden rounded-3xl border border-white/10 bg-background shadow-glass">
+          <div className="relative z-10 w-full max-w-5xl overflow-hidden rounded-3xl border border-white/10 bg-background shadow-glass">
             <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
               <div>
-                <div className="text-sm font-semibold">{activeItem.title}</div>
-                <div className="text-xs text-muted-foreground">{activeItem.category}</div>
+                <div className="text-sm font-semibold">{activeArticle.title}</div>
+                <div className="text-xs text-muted-foreground">{activeArticle.category}</div>
               </div>
               <Button variant="ghost" size="icon" aria-label="Close article" onClick={() => setActiveId(null)}>
                 <X className="h-4 w-4" />
               </Button>
             </div>
-            <div className="grid gap-0 md:grid-cols-[1.05fr_0.95fr]">
-              <div className="aspect-[16/12] md:aspect-auto md:min-h-[320px]">
-                <img src={activeItem.image} alt={activeItem.title} className="h-full w-full object-cover object-[center_20%]" />
-              </div>
-              <div className="space-y-4 p-5">
-                <p className="text-sm leading-6 text-muted-foreground">{activeItem.body}</p>
+
+            <div className="grid gap-0 lg:grid-cols-[1.15fr_0.85fr]">
+              <div className="space-y-5 p-5">
+                <div className="overflow-hidden rounded-3xl border border-white/10">
+                  <img src={activeArticle.image} alt={activeArticle.title} className="h-full w-full object-cover object-[center_20%]" />
+                </div>
+                <div className="space-y-3">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <Badge>{activeArticle.category}</Badge>
+                    <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-muted-foreground">
+                      {activeArticle.likes} likes
+                    </span>
+                    <span className="rounded-full border border-white/10 px-3 py-1 text-xs text-muted-foreground">
+                      {activeArticle.comments.length} comments
+                    </span>
+                  </div>
+                  <p className="text-sm leading-6 text-muted-foreground">{activeArticle.body}</p>
+                </div>
                 <div className="flex flex-wrap gap-2">
-                  <Button
-                    variant={interactions[activeItem.id]?.vote === 'up' ? 'default' : 'secondary'}
-                    size="sm"
-                    onClick={() => updateVote(activeItem.id, 'up')}
-                  >
+                  <Button variant={activeArticle.currentVote === 'up' ? 'default' : 'secondary'} size="sm" onClick={() => setVote(activeArticle.id, 'up')}>
                     <ChevronUp className="h-4 w-4" />
                     Upvote
                   </Button>
-                  <Button
-                    variant={interactions[activeItem.id]?.vote === 'down' ? 'default' : 'secondary'}
-                    size="sm"
-                    onClick={() => updateVote(activeItem.id, 'down')}
-                  >
+                  <Button variant={activeArticle.currentVote === 'down' ? 'default' : 'secondary'} size="sm" onClick={() => setVote(activeArticle.id, 'down')}>
                     <ChevronDown className="h-4 w-4" />
                     Downvote
                   </Button>
                 </div>
-                <div className="space-y-3">
-                  <div className="text-sm font-medium">Comments</div>
-                  <div className="space-y-2">
-                    {(interactions[activeItem.id]?.comments || []).length ? (
-                      interactions[activeItem.id].comments.map((comment, idx) => (
-                        <div key={`${activeItem.id}-${idx}`} className="rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3 text-sm text-foreground">
-                          {comment}
+              </div>
+
+              <div className="border-t border-white/10 bg-white/[0.03] p-5 lg:border-l lg:border-t-0">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-medium">Comments</div>
+                    <div className="text-xs text-muted-foreground">
+                      {sessionName ? `Signed in as ${sessionName}` : 'Sign in to add a comment'}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="mt-4 max-h-[42vh] space-y-3 overflow-auto pr-1 lg:max-h-[56vh]">
+                  {activeArticle.comments.length ? (
+                    activeArticle.comments.map((comment) => (
+                      <div key={comment.id} className="rounded-2xl border border-white/10 bg-white/[0.06] px-4 py-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="text-sm font-medium">{comment.display_name || 'Community member'}</div>
+                          <div className="text-xs text-muted-foreground">{formatTimestamp(comment.created_at)}</div>
                         </div>
-                      ))
-                    ) : (
-                      <div className="text-sm text-muted-foreground">No comments yet.</div>
-                    )}
-                  </div>
-                  <div className="flex gap-2">
-                    <Input
-                      value={draft}
-                      onChange={(e) => setDraft(e.target.value)}
-                      placeholder="Write a comment"
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          addComment();
-                        }
-                      }}
-                    />
-                    <Button onClick={addComment}>
-                      <Send className="h-4 w-4" />
-                    </Button>
-                  </div>
+                        <p className="mt-2 text-sm leading-6 text-muted-foreground">{comment.body}</p>
+                      </div>
+                    ))
+                  ) : (
+                    <div className="rounded-2xl border border-dashed border-white/10 bg-white/[0.04] px-4 py-6 text-sm text-muted-foreground">
+                      Be the first to add a comment.
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-4 flex gap-2">
+                  <Input
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    placeholder={sessionName ? 'Write a comment' : 'Sign in to comment'}
+                    disabled={!sessionUserId}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        addComment();
+                      }
+                    }}
+                  />
+                  <Button onClick={addComment} disabled={!sessionUserId}>
+                    <Send className="h-4 w-4" />
+                  </Button>
                 </div>
               </div>
             </div>
