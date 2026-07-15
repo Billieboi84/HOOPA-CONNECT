@@ -11,3 +11,4 @@ coverage
 .codex
 tmp
 js/portal.js.bak
+tsconfig.tsbuildinfo

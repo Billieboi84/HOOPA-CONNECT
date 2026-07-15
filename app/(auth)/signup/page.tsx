@@ -1,8 +1,7 @@
 import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
-import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
+import { AuthSignupForm } from '@/components/auth-signup-form';
 
 export default function SignupPage() {
   return (
@@ -14,10 +13,7 @@ export default function SignupPage() {
         <CardTitle>Join the community portal</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
-        <Input placeholder="Full name" />
-        <Input type="email" placeholder="Email" />
-        <Input type="password" placeholder="Password" />
-        <Button className="w-full">Continue</Button>
+        <AuthSignupForm />
         <p className="text-sm text-muted-foreground">
           Already registered? <Link className="text-primary" href="/login">Sign in</Link>
         </p>
