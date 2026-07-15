@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { PortalCard } from '@/components/portal-card';
 import { HeroStage } from '@/components/hero-stage';
+import { ChairmanSection } from '@/components/chairman-section';
 import { InfiniteNewsFeed } from '@/components/infinite-news-feed';
 import { directoryItems, jobItems, newsItems } from '@/lib/mock-data';
 
@@ -49,6 +50,8 @@ export default function HomePage() {
         </div>
         <InfiniteNewsFeed items={newsItems} />
       </section>
+
+      <ChairmanSection />
     </div>
   );
 }

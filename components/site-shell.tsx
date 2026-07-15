@@ -1,16 +1,49 @@
 "use client";
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { ReactNode } from 'react';
 import Link from 'next/link';
-import { ArrowRight, Menu, MessageSquare, Search, Shield, Sparkles, X } from 'lucide-react';
+import { ArrowRight, LogOut, Menu, MessageSquare, Search, Shield, Sparkles, X } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { ThemeToggle } from '@/components/theme-toggle';
 import { FloatingNav } from '@/components/floating-nav';
 import { navItems } from '@/lib/navigation';
+import { createSupabaseBrowserClient } from '@/lib/supabase/client';
 
 export function SiteShell({ children }: { children: ReactNode }) {
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [signedIn, setSignedIn] = useState(false);
+
+  useEffect(() => {
+    const supabase = createSupabaseBrowserClient();
+    if (!supabase) return;
+
+    let active = true;
+
+    supabase.auth.getUser().then(({ data }) => {
+      if (active) setSignedIn(Boolean(data.user));
+    });
+
+    const { data } = supabase.auth.onAuthStateChange(() => {
+      supabase.auth.getUser().then(({ data }) => {
+        if (active) setSignedIn(Boolean(data.user));
+      });
+    });
+
+    return () => {
+      active = false;
+      data.subscription.unsubscribe();
+    };
+  }, []);
+
+  async function handleSignOut() {
+    const supabase = createSupabaseBrowserClient();
+    if (!supabase) return;
+    await supabase.auth.signOut();
+    setSignedIn(false);
+    setDrawerOpen(false);
+    window.location.href = '/';
+  }
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -41,12 +74,19 @@ export function SiteShell({ children }: { children: ReactNode }) {
               </Link>
             </Button>
             <ThemeToggle />
-            <Button size="sm" asChild>
-              <Link href="/signup">
-                Get Started
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-            </Button>
+            {signedIn ? (
+              <Button size="sm" variant="secondary" onClick={handleSignOut}>
+                <LogOut className="h-4 w-4" />
+                Sign out
+              </Button>
+            ) : (
+              <Button size="sm" asChild>
+                <Link href="/signup">
+                  Get Started
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            )}
           </div>
 
           <div className="flex items-center gap-2 md:hidden">
@@ -104,16 +144,25 @@ export function SiteShell({ children }: { children: ReactNode }) {
               })}
             </div>
             <div className="mt-6 grid gap-3">
-              <Button asChild>
-                <Link href="/signup" onClick={() => setDrawerOpen(false)}>
-                  Get started
-                </Link>
-              </Button>
-              <Button variant="secondary" asChild>
-                <Link href="/login" onClick={() => setDrawerOpen(false)}>
-                  Sign in
-                </Link>
-              </Button>
+              {signedIn ? (
+                <Button variant="secondary" onClick={handleSignOut}>
+                  <LogOut className="h-4 w-4" />
+                  Sign out
+                </Button>
+              ) : (
+                <>
+                  <Button asChild>
+                    <Link href="/signup" onClick={() => setDrawerOpen(false)}>
+                      Get started
+                    </Link>
+                  </Button>
+                  <Button variant="secondary" asChild>
+                    <Link href="/login" onClick={() => setDrawerOpen(false)}>
+                      Sign in
+                    </Link>
+                  </Button>
+                </>
+              )}
             </div>
           </aside>
         </div>
@@ -121,3 +170,4 @@ export function SiteShell({ children }: { children: ReactNode }) {
     </div>
   );
 }
+

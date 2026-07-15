@@ -7,9 +7,9 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 
 const metrics = [
-  { label: 'Mobile-first', value: 'Fast scanning' },
-  { label: 'Dark mode', value: 'Default experience' },
-  { label: 'Realtime', value: 'Supabase-ready' }
+  { label: 'Local news', value: 'Announcements and updates' },
+  { label: 'Marketplace', value: 'Buy, sell, and browse' },
+  { label: 'Jobs', value: 'Current opportunities' }
 ];
 
 export function HeroStage() {
@@ -30,7 +30,7 @@ export function HeroStage() {
             Hoopa Connect connects the people of the Hoopa Valley with local news, jobs, marketplace listings, and trusted community resources.
           </motion.h1>
           <p className="max-w-2xl text-sm leading-6 text-muted-foreground md:text-base">
-            Built with a modern React stack and Supabase-backed authentication, storage, and realtime data.
+            Built to keep the community informed and moving with a focused, mobile-ready portal.
           </p>
           <div className="flex flex-wrap gap-3">
             <Button size="lg" asChild>

@@ -43,7 +43,7 @@ export function AuthSignupForm() {
       return;
     }
 
-    router.push('/profile');
+    router.push('/');
     router.refresh();
   }
 
@@ -76,4 +76,3 @@ export function AuthSignupForm() {
     </form>
   );
 }
-

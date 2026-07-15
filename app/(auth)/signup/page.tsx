@@ -7,7 +7,7 @@ import { AuthRedirect } from '@/components/auth-redirect';
 export default function SignupPage() {
   return (
     <Card className="border-white/10 bg-white/[0.06] shadow-glass backdrop-blur-xl">
-      <AuthRedirect />
+      <AuthRedirect to="/" />
       <CardHeader>
         <Badge variant="accent" className="w-fit">
           Create account
