@@ -1,0 +1,13 @@
+.next
+node_modules
+dist
+coverage
+.env
+.env.local
+.env.production.local
+.env.development.local
+.idea
+.ai
+.codex
+tmp
+js/portal.js.bak
