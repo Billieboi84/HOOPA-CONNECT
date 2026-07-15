@@ -1,4 +1,20 @@
 (function () {
+  function reportError(context, error) {
+    // Single, visible error surface. Replace console sink with telemetry as needed.
+    try {
+      console.error('[portal] ' + context + ':', error);
+    } catch (_) {
+      /* ignore */
+    }
+  }
+  if (typeof window !== 'undefined') {
+    window.addEventListener('error', function (event) {
+      reportError('window.error', event.error || event.message);
+    });
+    window.addEventListener('unhandledrejection', function (event) {
+      reportError('unhandledrejection', event.reason);
+    });
+  }
   const STORAGE_KEY = 'hoopa-portal-data-v1';
   const sampleData = {
     news: [
@@ -108,6 +124,19 @@
     return parsed;
   }
 
+  function renderEmptyState(title, message, linkHref, linkLabel) {
+    const action = linkHref && linkLabel
+      ? `<a class="text-link" href="${esc(linkHref)}">${esc(linkLabel)}</a>`
+      : '';
+    return `
+      <div class="portal-empty">
+        <h4>${esc(title)}</h4>
+        <p>${esc(message)}</p>
+        ${action}
+      </div>
+    `;
+  }
+
   function getLocalPortalData() {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
@@ -132,7 +161,12 @@
       const user = userData?.user;
       if (user) {
         const remoteData = user.user_metadata?.portal_data;
-        const hasRemoteData = remoteData && typeof remoteData === 'object' && (remoteData.news || remoteData.chairmanMessages || remoteData.directory || remoteData.jobs);
+        const hasRemoteData = remoteData && typeof remoteData === 'object' && (
+          Object.prototype.hasOwnProperty.call(remoteData, 'news') ||
+          Object.prototype.hasOwnProperty.call(remoteData, 'chairmanMessages') ||
+          Object.prototype.hasOwnProperty.call(remoteData, 'directory') ||
+          Object.prototype.hasOwnProperty.call(remoteData, 'jobs')
+        );
         if (hasRemoteData) {
           portalData = mergeDefaults(remoteData);
           localStorage.setItem(STORAGE_KEY, JSON.stringify(portalData));
@@ -170,12 +204,20 @@
     const chairmanPreview = document.getElementById('chairman-preview');
 
     if (newsFeed) {
-      newsFeed.innerHTML = data.news.slice(0, 3).map(buildNewsCard).join('');
+      const articles = Array.isArray(data.news) ? data.news.slice(0, 3) : [];
+      newsFeed.innerHTML = articles.length
+        ? articles.map(buildNewsCard).join('')
+        : renderEmptyState(
+            'No stories posted yet',
+            'Add a news item from the admin panel to populate the community feed.',
+            'admin.html?portalAdmin=open',
+            'Open admin'
+          );
     }
 
     if (chairmanPreview) {
-      const message = data.chairmanMessages[0];
-      chairmanPreview.innerHTML = `
+      const message = Array.isArray(data.chairmanMessages) ? data.chairmanMessages[0] : null;
+      chairmanPreview.innerHTML = message ? `
         <div class="chairman-card">
           <img src="images/chairman-davis.jpeg" alt="Chairman Joe Davis">
           <div>
@@ -185,11 +227,20 @@
             <div class="meta-row"><span>${esc(message.date)}</span><a class="text-link" href="admin.html?portalAdmin=open">Update message</a></div>
           </div>
         </div>
-      `;
+      ` : renderEmptyState(
+        'No chairman message available',
+        'Publish the latest update from the admin panel to show it here.',
+        'admin.html?portalAdmin=open',
+        'Open admin'
+      );
     }
   }
 
   function buildNewsCard(article) {
+    const votes = getUserVotes();
+    const userVote = votes['news:' + article.id] || null;
+    const likeActive = userVote === 'like' ? ' vote-active' : '';
+    const dislikeActive = userVote === 'dislike' ? ' vote-active' : '';
     return `
       <article class="portal-card">
         <img src="${esc(article.image || 'https://images.unsplash.com/photo-1495020689067-958852a7765e?auto=format&fit=crop&w=900&q=80')}" alt="${esc(article.title)}">
@@ -201,8 +252,8 @@
           <h4>${esc(article.title)}</h4>
           <p>${esc(article.summary || article.body || '')}</p>
           <div class="stats-row">
-            <button class="vote-btn" data-action="vote" data-target="news" data-id="${esc(article.id)}" data-value="like">👍 ${esc(article.likes || 0)}</button>
-            <button class="vote-btn" data-action="vote" data-target="news" data-id="${esc(article.id)}" data-value="dislike">👎 ${esc(article.dislikes || 0)}</button>
+            <button class="vote-btn${likeActive}" data-action="vote" data-target="news" data-id="${esc(article.id)}" data-value="like">👍 ${esc(article.likes || 0)}</button>
+            <button class="vote-btn${dislikeActive}" data-action="vote" data-target="news" data-id="${esc(article.id)}" data-value="dislike">👎 ${esc(article.dislikes || 0)}</button>
             <span class="comment-count">💬 ${esc((article.comments || []).length)}</span>
             <button class="text-link" type="button" data-open-article="${esc(article.id)}">Read more</button>
           </div>
@@ -219,49 +270,177 @@
   }
 
   async function renderDirectoryPage() {
-    const data = await loadPortalData();
     const list = document.getElementById('directory-list');
     if (!list) return;
-    list.innerHTML = data.directory.map((entry) => `
-      <article class="portal-card">
-        <div class="portal-card-body">
-          <div class="portal-card-top">
-            <span class="card-badge">${esc(entry.kind)}</span>
-            <span class="card-distance">Local resource</span>
-          </div>
-          <h4>${esc(entry.name)}</h4>
-          <p>${esc(entry.address)}</p>
-          <p>${esc(entry.phone)}</p>
-          <div class="stats-row">
-            <a class="text-link" href="${esc(entry.website)}" target="_blank" rel="noreferrer">Website</a>
-            <a class="text-link" href="${esc(entry.maps)}" target="_blank" rel="noreferrer">Open in Maps</a>
-          </div>
-        </div>
-      </article>
-    `).join('');
+
+    // Fetch directory entries from Supabase
+    let entries = [];
+    try {
+      var sb = window.__supabase;
+      if (!sb) {
+        console.warn('Supabase client not available, falling back to local data');
+      } else {
+        const { data, error } = await sb
+          .from('directory_entries')
+          .select('*')
+          .order('name', { ascending: true });
+        if (!error && data && data.length) {
+          entries = data;
+        } else {
+          console.warn('Supabase directory fetch returned no data or error:', error);
+        }
+      }
+    } catch (e) {
+      console.warn('Could not fetch directory from Supabase', e);
+    }
+
+    // Fallback to local data if Supabase fails
+    if (!entries.length) {
+      const data = await loadPortalData();
+      entries = Array.isArray(data.directory) ? data.directory : [];
+    }
+
+    // Get filter values
+    const kindFilter = document.getElementById('dir-filter-kind');
+    const categoryFilter = document.getElementById('dir-filter-category');
+    const searchFilter = document.getElementById('dir-filter-search');
+    const kindVal = kindFilter ? kindFilter.value : 'all';
+    const catVal = categoryFilter ? categoryFilter.value : 'all';
+    const searchVal = searchFilter ? searchFilter.value.toLowerCase().trim() : '';
+
+    // Apply filters
+    let filtered = entries.filter(function (entry) {
+      if (kindVal !== 'all' && entry.kind !== kindVal) return false;
+      if (catVal !== 'all' && entry.category !== catVal) return false;
+      if (searchVal && entry.name.toLowerCase().indexOf(searchVal) === -1) return false;
+      return true;
+    });
+    list.innerHTML = filtered.length ? filtered.map(function (entry) {
+      // Build Google Maps embed URL from coordinates or address
+      var mapQuery = '';
+      if (entry.latitude && entry.longitude) {
+        mapQuery = entry.latitude + ',' + entry.longitude;
+      } else if (entry.address) {
+        mapQuery = encodeURIComponent(entry.address);
+      } else {
+        mapQuery = encodeURIComponent(entry.name + ' Hoopa CA');
+      }
+      var embedUrl = 'https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZNTgao-7Ltq8I&q=' + encodeURIComponent(mapQuery);
+      var mapsUrl = entry.maps || 'https://maps.google.com/?q=' + encodeURIComponent(mapQuery);
+      return '' +
+      '<article class="portal-card">' +
+        '<div class="portal-card-body">' +
+          '<div class="portal-card-top">' +
+            '<span class="card-badge">' + esc(entry.kind) + '</span>' +
+            '<span class="card-distance">Local resource</span>' +
+          '</div>' +
+          '<h4>' + esc(entry.name) + '</h4>' +
+          (entry.category ? '<span class="dir-category-tag">' + esc(entry.category) + '</span>' : '') +
+          (entry.description ? '<p class="dir-description">' + esc(entry.description) + '</p>' : '') +
+          (entry.address ? '<p>' + esc(entry.address) + '</p>' : '') +
+          (entry.phone ? '<p>' + esc(entry.phone) + '</p>' : '') +
+          '<div class="stats-row">' +
+            (entry.website ? '<a class="text-link" href="' + esc(entry.website) + '" target="_blank" rel="noreferrer">Website</a>' : '') +
+            '<a class="dir-map-btn" href="' + esc(mapsUrl) + '" target="_blank" rel="noreferrer">' +
+              '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>' +
+              ' Open in Maps' +
+            '</a>' +
+          '</div>' +
+          '<div class="dir-entry-map">' +
+            '<iframe src="' + esc(embedUrl) + '&zoom=15" allowfullscreen loading="lazy"></iframe>' +
+          '</div>' +
+        '</div>' +
+      '</article>';
+    }).join('') : renderEmptyState(
+      'No directory entries match your filters',
+      'Try adjusting the filters or add new entries from the admin panel.',
+      'admin.html?portalAdmin=open',
+      'Open admin'
+    );
   }
 
   async function renderJobsPage() {
-    const data = await loadPortalData();
     const list = document.getElementById('jobs-list');
     if (!list) return;
-    list.innerHTML = data.jobs.map((job) => `
-      <article class="portal-card">
-        <div class="portal-card-body">
-          <div class="portal-card-top">
-            <span class="card-badge">${esc(job.type)}</span>
-            <span class="card-distance">${esc(job.location)}</span>
-          </div>
-          <h4>${esc(job.title)}</h4>
-          <p><strong>${esc(job.employer)}</strong></p>
-          <p>${esc(job.summary)}</p>
-          <div class="stats-row">
-            <a class="text-link" href="${esc(job.link)}" target="_blank" rel="noreferrer">Apply</a>
-            <a class="text-link" href="${esc(job.download)}" target="_blank" rel="noreferrer">Download form</a>
-          </div>
-        </div>
-      </article>
-    `).join('');
+
+    // Fetch jobs from Supabase
+    let jobs = [];
+    try {
+      var sb = window.__supabase;
+      if (sb) {
+        const { data, error } = await sb
+          .from('job_listings')
+          .select('*')
+          .order('created_at', { ascending: false });
+        if (!error && data && data.length) {
+          jobs = data;
+        } else {
+          console.warn('Supabase jobs fetch returned no data or error:', error);
+        }
+      }
+    } catch (e) {
+      console.warn('Could not fetch jobs from Supabase', e);
+    }
+
+    // Fallback to local data if Supabase fails
+    if (!jobs.length) {
+      const data = await loadPortalData();
+      jobs = Array.isArray(data.jobs) ? data.jobs : [];
+    }
+
+    // Get filter values
+    var typeFilter = document.getElementById('filter-type');
+    var catFilter = document.getElementById('filter-category');
+    var searchFilter = document.getElementById('filter-search');
+    var typeVal = typeFilter ? typeFilter.value : '';
+    var catVal = catFilter ? catFilter.value : '';
+    var searchVal = searchFilter ? searchFilter.value.toLowerCase().trim() : '';
+
+    // Apply filters
+    var filtered = jobs.filter(function (job) {
+      if (typeVal && job.type !== typeVal) return false;
+      if (catVal && job.category !== catVal) return false;
+      if (searchVal && job.title.toLowerCase().indexOf(searchVal) === -1 && job.employer.toLowerCase().indexOf(searchVal) === -1) return false;
+      return true;
+    });
+
+    if (!filtered.length) {
+      list.innerHTML = '<div class="no-jobs"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M16 16s-1.5-2-4-2-4 2-4 2"/><line x1="9" y1="9" x2="9.01" y2="9"/><line x1="15" y1="9" x2="15.01" y2="9"/></svg><h3>No jobs match your filters</h3><p style="color:#999;font-size:14px;">Try adjusting the filters or check back later.</p></div>';
+      return;
+    }
+
+    list.innerHTML = filtered.map(function (job) {
+      var badgeClass = 'badge-ft';
+      if (job.type === 'Part-time') badgeClass = 'badge-pt';
+      else if (job.type === 'Seasonal') badgeClass = 'badge-seasonal';
+
+      var closingHtml = '';
+      if (job.closing_date) {
+        var isUrgent = job.closing_date.toLowerCase() === 'open until filled' ? false : true;
+        closingHtml = '<span class="' + (isUrgent ? 'badge-closing' : '') + '" style="font-size:12px;">' + esc(job.closing_date) + '</span>';
+      }
+
+      var salaryHtml = job.salary ? '<span>💰 ' + esc(job.salary) + '</span>' : '';
+
+      var applyBtn = job.link ? '<a class="btn-apply" href="' + esc(job.link) + '" target="_blank" rel="noreferrer">📝 Apply Online</a>' : '';
+      var downloadBtn = job.download ? '<a class="btn-download" href="' + esc(job.download) + '" target="_blank" rel="noreferrer">📄 Download Application</a>' : '';
+
+      return '' +
+        '<div class="job-card">' +
+          '<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:6px;margin-bottom:6px;">' +
+            '<h3>' + esc(job.title) + '</h3>' +
+            '<span class="badge ' + badgeClass + '">' + esc(job.type) + '</span>' +
+          '</div>' +
+          '<div class="employer">🏢 ' + esc(job.employer) + ' &middot; ' + esc(job.location) + '</div>' +
+          '<div class="meta">' +
+            salaryHtml +
+            closingHtml +
+            (job.category ? '<span>📂 ' + esc(job.category) + '</span>' : '') +
+          '</div>' +
+          (job.summary ? '<div class="summary">' + esc(job.summary) + '</div>' : '') +
+          '<div class="actions">' + applyBtn + downloadBtn + '</div>' +
+        '</div>';
+    }).join('');
   }
 
   function bindAdminForms() {
@@ -302,27 +481,76 @@
         }
 
         if (type === 'directory') {
+          var nameVal = this.querySelector('[name="name"]').value.trim();
+          var kindVal = this.querySelector('[name="kind"]').value.trim();
+          var phoneVal = this.querySelector('[name="phone"]').value.trim();
+          var addressVal = this.querySelector('[name="address"]').value.trim();
+          var websiteVal = this.querySelector('[name="website"]').value.trim();
+          var mapsVal = this.querySelector('[name="maps"]').value.trim();
+          // Save to Supabase
+          try {
+            var sb = window.__supabase;
+            if (sb) {
+              await sb.from('directory_entries').insert({
+                name: nameVal,
+                kind: kindVal || 'Business',
+                phone: phoneVal,
+                address: addressVal,
+                website: websiteVal,
+                maps: mapsVal
+              });
+            }
+          } catch (e) {
+            console.warn('Could not save directory entry to Supabase', e);
+          }
+
+          // Also save to local data as fallback
           data.directory.unshift({
             id: 'dir-' + Date.now(),
-            name: this.querySelector('[name="name"]').value.trim(),
-            kind: this.querySelector('[name="kind"]').value.trim(),
-            phone: this.querySelector('[name="phone"]').value.trim(),
-            address: this.querySelector('[name="address"]').value.trim(),
-            website: this.querySelector('[name="website"]').value.trim(),
-            maps: this.querySelector('[name="maps"]').value.trim()
+            name: nameVal,
+            kind: kindVal || 'Business',
+            phone: phoneVal,
+            address: addressVal,
+            website: websiteVal,
+            maps: mapsVal
           });
         }
 
         if (type === 'jobs') {
+          var jobTitle = this.querySelector('[name="title"]').value.trim();
+          var jobEmployer = this.querySelector('[name="employer"]').value.trim();
+          var jobType = this.querySelector('[name="type"]').value.trim();
+          var jobLocation = this.querySelector('[name="location"]').value.trim();
+          var jobLink = this.querySelector('[name="link"]').value.trim();
+          var jobDownload = this.querySelector('[name="download"]').value.trim();
+          var jobSummary = this.querySelector('[name="summary"]').value.trim();
+          // Save to Supabase
+          try {
+            var sb = window.__supabase;
+            if (sb) {
+              await sb.from('job_listings').insert({
+                title: jobTitle,
+                employer: jobEmployer,
+                type: jobType || 'Full-time',
+                location: jobLocation || 'Hoopa, CA',
+                link: jobLink,
+                download: jobDownload,
+                summary: jobSummary
+              });
+            }
+          } catch (e) {
+            console.warn('Could not save job to Supabase', e);
+          }
+          // Also save to local data as fallback
           data.jobs.unshift({
             id: 'job-' + Date.now(),
-            title: this.querySelector('[name="title"]').value.trim(),
-            employer: this.querySelector('[name="employer"]').value.trim(),
-            type: this.querySelector('[name="type"]').value.trim(),
-            location: this.querySelector('[name="location"]').value.trim(),
-            link: this.querySelector('[name="link"]').value.trim(),
-            download: this.querySelector('[name="download"]').value.trim(),
-            summary: this.querySelector('[name="summary"]').value.trim()
+            title: jobTitle,
+            employer: jobEmployer,
+            type: jobType || 'Full-time',
+            location: jobLocation || 'Hoopa, CA',
+            link: jobLink,
+            download: jobDownload,
+            summary: jobSummary
           });
         }
 
@@ -336,6 +564,22 @@
     });
   }
 
+  const VOTE_STORAGE_KEY = 'hoopa-portal-votes-v1';
+
+  function getUserVotes() {
+    try {
+      return JSON.parse(window.localStorage.getItem(VOTE_STORAGE_KEY)) || {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function saveUserVotes(votes) {
+    try {
+      window.localStorage.setItem(VOTE_STORAGE_KEY, JSON.stringify(votes));
+    } catch (_) { /* ignore */ }
+  }
+
   async function handleVoting(event) {
     const button = event.target.closest('[data-action="vote"]');
     if (!button) return;
@@ -343,10 +587,29 @@
     const target = button.dataset.target;
     const id = button.dataset.id;
     const value = button.dataset.value;
-    const entry = data[target].find((item) => item.id === id);
+    const collection = Array.isArray(data[target]) ? data[target] : [];
+    const entry = collection.find((item) => item.id === id);
     if (!entry) return;
+
+    const votes = getUserVotes();
+    const key = target + ':' + id;
+    const previousVote = votes[key];
+
+    // If the user already voted the same way, do nothing (prevent duplicate counting)
+    if (previousVote === value) return;
+
+    // If the user previously voted the opposite way, remove that vote first
+    if (previousVote === 'like') entry.likes = Math.max(0, (entry.likes || 0) - 1);
+    if (previousVote === 'dislike') entry.dislikes = Math.max(0, (entry.dislikes || 0) - 1);
+
+    // Apply the new vote
     if (value === 'like') entry.likes = (entry.likes || 0) + 1;
     if (value === 'dislike') entry.dislikes = (entry.dislikes || 0) + 1;
+
+    // Record the vote
+    votes[key] = value;
+    saveUserVotes(votes);
+
     await savePortalData(data);
     await renderApp();
   }
@@ -359,11 +622,13 @@
     const data = await loadPortalData();
     const target = form.dataset.target;
     const id = form.dataset.id;
-    const entry = data[target].find((item) => item.id === id);
+    const collection = Array.isArray(data[target]) ? data[target] : [];
+    const entry = collection.find((item) => item.id === id);
     if (!entry) return;
     entry.comments = entry.comments || [];
     entry.comments.unshift(message);
     await savePortalData(data);
+    form.reset();
     await renderApp();
   }
 
@@ -419,7 +684,46 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     showAdminAccessIfAuthorized();
-    renderApp();
+    const boot = renderApp();
+    if (boot && typeof boot.catch === 'function') {
+      boot.catch(function (err) { reportError('renderApp.bootstrap', err); });
+    }
+
+    // Directory filter listeners
+    var dirKind = document.getElementById('dir-filter-kind');
+    var dirCat = document.getElementById('dir-filter-category');
+    var dirSearch = document.getElementById('dir-filter-search');
+    if (dirKind) {
+      dirKind.addEventListener('change', function () { renderDirectoryPage(); });
+    }
+    if (dirCat) {
+      dirCat.addEventListener('change', function () { renderDirectoryPage(); });
+    }
+    if (dirSearch) {
+      var debounceTimer;
+      dirSearch.addEventListener('input', function () {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(function () { renderDirectoryPage(); }, 250);
+      });
+    }
+
+    // Job filter listeners
+    var jobType = document.getElementById('filter-type');
+    var jobCat = document.getElementById('filter-category');
+    var jobSearch = document.getElementById('filter-search');
+    if (jobType) {
+      jobType.addEventListener('change', function () { renderJobsPage(); });
+    }
+    if (jobCat) {
+      jobCat.addEventListener('change', function () { renderJobsPage(); });
+    }
+    if (jobSearch) {
+      var jobDebounce;
+      jobSearch.addEventListener('input', function () {
+        clearTimeout(jobDebounce);
+        jobDebounce = setTimeout(function () { renderJobsPage(); }, 250);
+      });
+    }
   });
 
   document.addEventListener('click', function (event) {

@@ -8,6 +8,30 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
+<style>
+  .job-filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }
+  .job-filters select, .job-filters input { flex: 1; min-width: 140px; padding:px 14px; border: 1px solid #ddd; border-radius: 10px; font-size: 14px; background: #fff; }
+  .job-filters input { flex: 2; }
+  .job-card { background: #fff; border-radius: 14px; padding: 18px 20px; margin-bottom: 14px; box-shadow: 0 2px 8px rgba(0,0.06); border-left: 4px solid #2d6a4f; }
+  .job-card h3 { margin: 0 4px; font-size: 17px; color: #1b4332; }
+  .job-card .employer { font-size: 14px; color: #555; margin-bottom: 6px; }
+  .job-card .meta { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 13px; color: #666; margin-bottom: 8px; }
+  .job-card .meta span { display: inline-flex; align-items: center; gap: 4px; }
+  .job-card .summary { font-size: 14px; color: #444; line-height: 1.5; margin-bottom: 10px; }
+  .job-card .actions { display: flex; gap: 10px; flex-wrap: wrap; }
+  .job-card .actions a { padding: 8px 16px; border-radius: 8px; font-size: 13px; font-weight: 600; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; }
+  .btn-apply { background: #2d6a4f; color: #fff; }
+  .btn-apply:hover { background: #1b4332; }
+  .btn-download { background: #e9c46a; color: #333; }
+  .btn-download:hover { background: #d4a373; }
+  .badge { display: inline-block; padding 2px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+  .badge-ft { background: #d8f3dc; color: #1b4332; }
+  .badge-pt { background: #fff3cd; color: #856404; }
+  .badge-seasonal { background: #cfe2ff; color: #0a58ca; }
+  .badge-closing { background: #f8d7da; color: #842029; }
+  .no-jobs { text-align: center; padding: 40px 20px; color: #888; }
+  .no-jobs svg { width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.4; }
+</style>
 </head>
 <body>
 <header class="topbar">
@@ -23,6 +47,25 @@
         <p>Discover local and tribal job openings, career resources, and application links in one place.</p>
       </div>
     </div>
+  </div>
+  <div class="job-filters">
+    <select id="filter-type">
+      <option value="">All Types</option>
+      <option value="Full-time">Full-time</option>
+      <option value="Part-time">Part-time</option>
+      <option value="Seasonal">Seasonal</option>
+    </select>
+    <select id="filter-category">
+      <option value="">All Categories</option>
+      <option value="Public Safety">Public Safety</option>
+      <option value="Natural Resources">Natural Resources</option>
+      <option value="Healthcare">Healthcare</option>
+      <option value="Education">Education</option>
+      <option value="Administration">Administration</option>
+      <option value="Public Works">Public Works</option>
+      <option value="Services">Services</option>
+    </select>
+    <input type="text" id="filter-search" placeholder="Search jobs…">
   </div>
   <div id="jobs-list" class="portal-stack"></div>
 </div>
@@ -48,6 +91,8 @@
     <span class="nav-label">Profile</span>
   </a>
 </nav>
+<script src="https://unpkg.com/@supabase/supabase-js@2.39.0/dist/umd/supabase.min.js"></script>
+<script src="js/supabase.js"></script>
 <script src="js/portal.js"></script>
 </body>
 </html>

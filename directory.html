@@ -8,6 +8,88 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
+<style>
+  #map-container {
+    width: 100%;
+    height: 300px;
+    border-radius: var(--radius);
+    overflow: hidden;
+    margin-bottom: 20px;
+    border: 1px solid var(--border);
+  }
+  #map-container iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+  .dir-filter-bar {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .dir-filter-bar select,
+  .dir-filter-bar input {
+    flex: 1;
+    min-width: 140px;
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-sm);
+    padding: 10px 14px;
+    color: var(--text);
+    font-family: 'DM Sans', sans-serif;
+    font-size: 14px;
+    outline: none;
+  }
+  .dir-filter-bar select:focus,
+  .dir-filter-bar input:focus {
+    border-color: var(--accent);
+  }
+  .dir-map-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: var(--accent-dim);
+    color: var(--accent);
+    border: 1px solid var(--border-bright);
+    border-radius: var(--radius-sm);
+    padding: 6px 14px;
+    font-size: 13px;
+    cursor: pointer;
+    text-decoration: none;
+    transition: background .15s;
+  }
+  .dir-map-btn:hover {
+    background: var(--accent-glow);
+  }
+  .dir-entry-map {
+    width: 100%;
+    height: 180px;
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+    margin-top: 12px;
+    border: 1px solid var(--border);
+  }
+  .dir-entry-map iframe {
+    width: 100%;
+    height: 100%;
+    border: 0;
+  }
+  .dir-category-tag {
+    display: inline-block;
+    background: var(--accent-2-dim);
+    color: var(--accent-2);
+    font-size: 11px;
+    padding: 2px 10px;
+    border-radius: 20px;
+    margin-top: 6px;
+  }
+  .dir-description {
+    font-size: 13px;
+    color: var(--text-muted);
+    margin-top: 4px;
+  }
+</style>
 </head>
 <body>
 <header class="topbar">
@@ -24,6 +106,36 @@
       </div>
     </div>
   </div>
+
+  <!-- Filter bar -->
+  <div class="dir-filter-bar">
+    <select id="dir-filter-kind">
+      <option value="all">All Types</option>
+      <option value="Business">Businesses</option>
+      <option value="Tribal Entity">Tribal Entities</option>
+    </select>
+    <select id="dir-filter-category">
+      <option value="all">All Categories</option>
+      <option value="Government">Government</option>
+      <option value="Health">Health</option>
+      <option value="Education">Education</option>
+      <option value="Retail">Retail</option>
+      <option value="Services">Services</option>
+      <option value="Culture">Culture</option>
+      <option value="Recreation">Recreation</option>
+    </select>
+    <input type="text" id="dir-filter-search" placeholder="Search by name...">
+  </div>
+
+  <!-- Map overview -->
+  <div id="map-container">
+    <iframe
+      src="https://www.google.com/maps/embed/v1/place?key=AIzaSyBFw0Qbyq9zTFTd-tUY6dZNTgao-7Ltq8I&q=Hoopa+California&center=41.0526,-123.6749&zoom=12"
+      allowfullscreen
+      loading="lazy">
+    </iframe>
+  </div>
+
   <div id="directory-list" class="portal-stack"></div>
 </div>
 <nav class="bottom-nav">
@@ -48,6 +160,8 @@
     <span class="nav-label">Profile</span>
   </a>
 </nav>
+<script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+<script src="js/supabase.js"></script>
 <script src="js/portal.js"></script>
 </body>
 </html>

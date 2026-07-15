@@ -12,9 +12,13 @@
 <script src="js/supabase.js"></script>
 </head>
 <body>
-<header class="topbar">
-  <a href="index.html" class="logo">
-    <img class="brand-badge brand-badge-large" src="images/hc-logo-badge.png" alt="Hoopa Connect badge">
+<header class="topbar topbar-home">
+  <a href="index.html" class="brand-lockup">
+    <img class="brand-mark" src="images/hc-logo-badge.png" alt="Hoopa Connect logo">
+    <span class="brand-wordmark">
+      <span class="brand-name">Hoopa Connect</span>
+      <span class="brand-subtitle">Community Portal</span>
+    </span>
   </a>
   <div class="topbar-side">
     <div class="weather-pill" aria-label="Weather for Hoopa">
@@ -43,15 +47,36 @@
 </div>
 <div class="container">
   <div class="hero-band" id="hero-band">
+    <div class="hero-brand">
+      <img class="hero-brand-banner" src="images/hc-logo-banner-style.png" alt="Hoopa Connect banner">
+    </div>
     <div class="hero-top">
       <div class="hero-copy">
         <div class="hero-eyebrow">Hoopa Valley Community Portal</div>
         <h2>Connecting Hoopa Valley</h2>
-        <p>A modern community portal for local news, trusted services, jobs, and important updates that keep Hoopa connected.</p>
+        <p>A community portal for local news, trusted services, jobs, and announcements. Everything important is organized in one place.</p>
       </div>
       <a class="hero-action" href="search.html">Open Marketplace</a>
     </div>
-    <div class="search-pill">📣 Stay informed with local stories, opportunities, and community announcements</div>
+    <div class="hero-actions">
+      <a class="hero-action hero-action-secondary" href="directory.html">View Directory</a>
+      <a class="hero-action hero-action-secondary" href="jobs.html">Browse Jobs</a>
+      <a class="hero-action hero-action-secondary" href="profile.html">Profile</a>
+    </div>
+    <div class="hero-metrics" aria-label="Quick navigation">
+      <div class="hero-metric">
+        <strong>News</strong>
+        <span>Updates and notices</span>
+      </div>
+      <div class="hero-metric">
+        <strong>Directory</strong>
+        <span>Trusted local contacts</span>
+      </div>
+      <div class="hero-metric">
+        <strong>Jobs</strong>
+        <span>Open opportunities</span>
+      </div>
+    </div>
   </div>
 
   <div class="section-block">

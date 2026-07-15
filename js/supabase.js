@@ -1,6 +1,8 @@
 const supabaseUrl = "https://adzdsjyjakcsisergckt.supabase.co";
 const supabaseKey = "sb_publishable_-9Maej0xtPLvJWtMTvZtbw_2YPHtxzu";
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+// Make it explicitly available on window for IIFE access
+window.__supabase = supabaseClient;
 
 // Shared toast helper
 function showToast(msg, type) {
