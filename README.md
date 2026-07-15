@@ -1,8 +1,8 @@
 # Hoopa Connect
 
-This branch is the migration track for a modern React frontend. The current static site in `main` stays usable while this branch evolves into the Next.js app.
+This branch contains the Next.js version of Hoopa Connect. It keeps the same community purpose while moving the experience to a modern React stack.
 
-## Migration target
+## Stack
 
 - React 19
 - Next.js 15

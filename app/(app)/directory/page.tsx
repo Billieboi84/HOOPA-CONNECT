@@ -12,10 +12,10 @@ export default async function DirectoryPage() {
         <Badge variant="accent" className="w-fit">
           Directory
         </Badge>
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight">Trusted local listings, ready for Supabase data.</h1>
+        <h1 className="mt-4 text-3xl font-semibold tracking-tight">Trusted local listings for the Hoopa Valley community.</h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-          This route is built to support the current directory_entries table with a modern card grid and
-          responsive filtering later in the migration.
+          The directory is backed by the existing `directory_entries` table and presented in a clean,
+          responsive card grid.
         </p>
       </section>
 

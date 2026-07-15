@@ -14,10 +14,10 @@ export default function HomePage() {
 
       <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         {[
-          { title: 'News', value: 'Live updates', icon: Newspaper },
-          { title: 'Directory', value: `${directoryItems.length} active listings`, icon: Pin },
+          { title: 'News', value: 'Local updates', icon: Newspaper },
+          { title: 'Directory', value: `${directoryItems.length} trusted listings`, icon: Pin },
           { title: 'Jobs', value: `${jobItems.length} open roles`, icon: TrendingUp },
-          { title: 'Community', value: 'Mobile-first portal', icon: UsersRound }
+          { title: 'Community', value: 'Built for Hoopa Valley', icon: UsersRound }
         ].map((item) => {
           const Icon = item.icon;
           return (
@@ -38,7 +38,7 @@ export default function HomePage() {
         <div className="flex items-end justify-between gap-3">
           <div>
             <Badge variant="accent">Community feed</Badge>
-            <h2 className="mt-3 text-2xl font-semibold tracking-tight">Infinite-scroll updates</h2>
+            <h2 className="mt-3 text-2xl font-semibold tracking-tight">Recent updates and announcements</h2>
           </div>
           <Button variant="ghost" size="sm" asChild>
             <Link href="/marketplace">

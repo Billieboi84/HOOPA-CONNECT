@@ -14,10 +14,10 @@ export default function MarketplacePage() {
         </Badge>
         <div className="mt-4 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
           <div className="max-w-2xl">
-            <h1 className="text-3xl font-semibold tracking-tight text-balance">A modern marketplace shell with room for listings, search, and filters.</h1>
+            <h1 className="text-3xl font-semibold tracking-tight text-balance">Browse local listings, offers, and community goods in one place.</h1>
             <p className="mt-3 text-sm leading-6 text-muted-foreground">
-              The new branch keeps the existing Supabase-backed data model but changes the experience to
-              a denser, faster React interface.
+              Hoopa Connect keeps the existing Supabase-backed data model and presents it in a faster,
+              cleaner marketplace layout.
             </p>
           </div>
           <Button asChild>

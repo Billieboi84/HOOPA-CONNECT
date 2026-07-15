@@ -2,10 +2,12 @@ import Link from 'next/link';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { AuthSignupForm } from '@/components/auth-signup-form';
+import { AuthRedirect } from '@/components/auth-redirect';
 
 export default function SignupPage() {
   return (
     <Card className="border-white/10 bg-white/[0.06] shadow-glass backdrop-blur-xl">
+      <AuthRedirect />
       <CardHeader>
         <Badge variant="accent" className="w-fit">
           Create account

@@ -12,10 +12,10 @@ export default async function JobsPage() {
         <Badge variant="accent" className="w-fit">
           Jobs
         </Badge>
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight">Recruiting, filtered, and mobile-friendly.</h1>
+        <h1 className="mt-4 text-3xl font-semibold tracking-tight">Local job opportunities for Hoopa Valley residents.</h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-          The next branch keeps the existing job_listings schema and upgrades the experience into a React
-          workflow with cleaner cards, better spacing, and loading states.
+          The jobs board is backed by the existing `job_listings` schema and shown with a responsive,
+          mobile-first layout.
         </p>
       </section>
 

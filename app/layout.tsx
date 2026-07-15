@@ -16,7 +16,7 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
   title: 'Hoopa Connect',
-  description: 'A modern community portal for news, jobs, directory listings, and local marketplace activity.'
+  description: 'Hoopa Connect connects the people of the Hoopa Valley with local news, jobs, marketplace listings, and trusted community resources.'
 };
 
 export default function RootLayout({ children }: Readonly<{ children: ReactNode }>) {

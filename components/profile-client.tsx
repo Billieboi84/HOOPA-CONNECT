@@ -38,9 +38,9 @@ export function ProfileClient() {
         <Badge variant="accent" className="w-fit">
           Profile
         </Badge>
-        <h1 className="mt-4 text-3xl font-semibold tracking-tight">Account and activity surface for Supabase auth.</h1>
+        <h1 className="mt-4 text-3xl font-semibold tracking-tight">Your account, listings, and saved activity.</h1>
         <p className="mt-3 max-w-2xl text-sm leading-6 text-muted-foreground">
-          This branch keeps the auth system and prepares a React UI for account management, listings, and saved items.
+          Manage your account session, view saved items, and keep track of your activity in one place.
         </p>
       </section>
 
@@ -48,7 +48,7 @@ export function ProfileClient() {
         <PortalCard
           eyebrow="Identity"
           title={loading ? 'Loading session' : email ?? 'Not signed in'}
-          summary="Connect Supabase Auth here."
+          summary="Connected to Supabase Auth."
           footer={email ? 'Active session' : 'Guest state'}
         >
           <div className="grid gap-3 sm:grid-cols-2">
@@ -85,4 +85,3 @@ export function ProfileClient() {
     </div>
   );
 }
-

@@ -19,7 +19,7 @@ export function HeroStage() {
         <div className="space-y-5">
           <Badge variant="accent" className="w-fit gap-2">
             <Sparkles className="h-3.5 w-3.5" />
-            Modern React migration
+            Community portal
           </Badge>
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
@@ -27,11 +27,10 @@ export function HeroStage() {
             transition={{ duration: 0.45 }}
             className="max-w-2xl text-4xl font-semibold tracking-tight text-balance md:text-5xl"
           >
-            A cleaner portal built for Hoopa Connect, with a UI that feels current.
+            Hoopa Connect connects the people of the Hoopa Valley with local news, jobs, marketplace listings, and trusted community resources.
           </motion.h1>
           <p className="max-w-2xl text-sm leading-6 text-muted-foreground md:text-base">
-            This branch starts the move to React 19, Next.js 15, TypeScript, Tailwind, shadcn/ui patterns,
-            and Framer Motion while keeping Supabase as the data and auth layer.
+            Built with a modern React stack and Supabase-backed authentication, storage, and realtime data.
           </p>
           <div className="flex flex-wrap gap-3">
             <Button size="lg" asChild>
