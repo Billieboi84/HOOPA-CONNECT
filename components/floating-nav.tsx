@@ -19,7 +19,7 @@ export function FloatingNav() {
             href={item.href}
             className={cn(
               'flex flex-1 flex-col items-center gap-1 rounded-full px-3 py-2 text-[11px] font-medium transition',
-              active ? 'bg-white/12 text-foreground' : 'text-muted-foreground hover:bg-white/8 hover:text-foreground'
+              active ? 'bg-white/[0.12] text-foreground' : 'text-muted-foreground hover:bg-white/[0.08] hover:text-foreground'
             )}
           >
             <Icon className={cn('h-4 w-4', active && 'text-primary')} />

@@ -64,7 +64,7 @@ h4,
 }
 
 .glass-panel {
-  @apply rounded-3xl border border-white/10 bg-white/6 shadow-glass backdrop-blur-xl;
+  @apply rounded-3xl border border-white/10 bg-white/[0.06] shadow-glass backdrop-blur-xl;
 }
 
 .section-grid {

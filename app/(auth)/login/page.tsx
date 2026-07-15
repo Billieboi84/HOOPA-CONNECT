@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 
 export default function LoginPage() {
   return (
-    <Card className="border-white/10 bg-white/6 shadow-glass backdrop-blur-xl">
+    <Card className="border-white/10 bg-white/[0.06] shadow-glass backdrop-blur-xl">
       <CardHeader>
         <Badge variant="accent" className="w-fit">
           Sign in
