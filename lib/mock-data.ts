@@ -6,6 +6,7 @@ export type NewsItem = {
   image: string;
   category: string;
   likes: number;
+  dislikes: number;
   comments: number;
 };
 
@@ -54,6 +55,7 @@ export const newsItems: NewsItem[] = [
     image: 'https://images.unsplash.com/photo-1516549655169-df83a0774514?auto=format&fit=crop&w=1200&q=80',
     category: 'Event',
     likes: 24,
+    dislikes: 1,
     comments: 7
   },
   {
@@ -64,6 +66,7 @@ export const newsItems: NewsItem[] = [
     image: 'https://images.unsplash.com/photo-1495020689067-958852a7765e?auto=format&fit=crop&w=1200&q=80',
     category: 'Culture',
     likes: 18,
+    dislikes: 0,
     comments: 3
   },
   {
@@ -74,6 +77,7 @@ export const newsItems: NewsItem[] = [
     image: 'https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?auto=format&fit=crop&w=1200&q=80',
     category: 'Notice',
     likes: 9,
+    dislikes: 2,
     comments: 1
   }
 ];

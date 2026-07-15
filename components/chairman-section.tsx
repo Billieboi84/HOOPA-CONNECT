@@ -6,12 +6,12 @@ export function ChairmanSection() {
   return (
     <section className="glass-panel overflow-hidden">
       <div className="grid gap-0 md:grid-cols-[0.95fr_1.05fr]">
-        <div className="relative min-h-[240px]">
+        <div className="relative aspect-[4/3] min-h-[280px] bg-black/10">
           <Image
             src="/images/chairman-davis.jpeg"
             alt="Chairman Joe Davis"
             fill
-            className="object-cover"
+            className="object-contain p-3"
             sizes="(max-width: 768px) 100vw, 45vw"
           />
         </div>
@@ -34,4 +34,3 @@ export function ChairmanSection() {
     </section>
   );
 }
-
